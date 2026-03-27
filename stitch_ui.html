@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&amp;family=Nanum+Pen+Script&amp;family=Gowun+Dodum&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-fixed-dim": "#ef6ca2",
+                        "tertiary": "#00647a",
+                        "surface-container": "#eae6f2",
+                        "on-primary-container": "#54002e",
+                        "surface-bright": "#f9f5ff",
+                        "surface-container-low": "#f3effa",
+                        "on-primary": "#ffeff2",
+                        "on-secondary-container": "#4930a7",
+                        "error-dim": "#a70138",
+                        "on-tertiary-fixed": "#003745",
+                        "on-tertiary": "#e1f6ff",
+                        "surface": "#f9f5ff",
+                        "outline": "#78767e",
+                        "surface-variant": "#dedbe8",
+                        "tertiary-dim": "#00576b",
+                        "inverse-surface": "#0e0e14",
+                        "secondary-dim": "#513ab0",
+                        "on-secondary-fixed-variant": "#523bb1",
+                        "tertiary-fixed": "#7adcfc",
+                        "on-tertiary-fixed-variant": "#00566a",
+                        "on-background": "#2f2e35",
+                        "on-surface-variant": "#5c5a63",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary": "#5e47bd",
+                        "primary": "#a22e64",
+                        "tertiary-container": "#7adcfc",
+                        "on-primary-fixed": "#160008",
+                        "secondary-fixed": "#d5cbff",
+                        "primary-container": "#ff79b0",
+                        "on-primary-fixed-variant": "#650038",
+                        "background": "#f9f5ff",
+                        "secondary-container": "#d5cbff",
+                        "on-error-container": "#510017",
+                        "primary-dim": "#922158",
+                        "surface-tint": "#a22e64",
+                        "outline-variant": "#aeacb5",
+                        "surface-container-high": "#e4e1ed",
+                        "inverse-on-surface": "#9e9ca5",
+                        "on-tertiary-container": "#004c5e",
+                        "surface-container-highest": "#dedbe8",
+                        "on-secondary": "#f6f0ff",
+                        "secondary-fixed-dim": "#c7bbff",
+                        "primary-fixed": "#ff79b0",
+                        "inverse-primary": "#ff79b0",
+                        "on-surface": "#2f2e35",
+                        "error-container": "#f74b6d",
+                        "surface-dim": "#d6d2e0",
+                        "on-error": "#ffefef",
+                        "on-secondary-fixed": "#351594",
+                        "tertiary-fixed-dim": "#6cceed",
+                        "error": "#b41340"
+                    },
+                    fontFamily: {
+                        "headline": ["Gaegu", "cursive"],
+                        "handwriting": ["Nanum Pen Script", "cursive"],
+                        "body": ["Gowun Dodum", "sans-serif"],
+                        "label": ["Gowun Dodum", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .holographic-bg {
+            background: linear-gradient(135deg, #f9f5ff 0%, #ffedf5 25%, #e0e7ff 50%, #f3effa 75%, #f9f5ff 100%);
+            background-size: 400% 400%;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .sticker-rotate-left { transform: rotate(-1.5deg); }
+        .sticker-rotate-right { transform: rotate(1.2deg); }
+        .holographic-button {
+            background: linear-gradient(90deg, #a22e64, #5e47bd, #00647a);
+            background-size: 200% auto;
+            transition: 0.5s;
+        }
+        .holographic-button:hover {
+            background-position: right center;
+        }
+        body {
+            min-height: 100dvh;
+        }
+    </style>
+</head>
+<body class="font-body text-on-surface bg-background min-h-screen holographic-bg">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#f9f5ff]/80 dark:bg-[#1a1625]/80 backdrop-blur-xl border-b border-[#d5cbff]/20 shadow-[0_8px_32px_rgba(162,46,100,0.06)]">
+<div class="flex justify-between items-center px-6 h-16 w-full max-w-7xl mx-auto">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#5e47bd]/70 hover:scale-105 transition-transform duration-300 active:scale-95" data-icon="menu">menu</button>
+<h1 class="font-headline font-bold text-2xl tracking-tight lg:text-3xl font-black bg-gradient-to-r from-[#a22e64] to-[#5e47bd] bg-clip-text text-transparent italic">아이디어 나눔터</h1>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden border-2 border-primary-container hover:scale-105 transition-transform">
+<img alt="사용자 프로필" data-alt="vibrant 3d avatar of a young creative person with colorful hair and stylish glasses in a k-pop aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFFS4KkU3Bz077VvsvonZz12Kwv-1hI5XOa3OUUuwInohTYyrN8Dn1yFF8JYnGY7NVmNq8DdnlWj4IWEZg4PtwsbtJbG5KeRkJakKj08MNrjuu1TOa0hjcpsB932a2tMTJGO00k2lmEMi326TbWe_ld1TmNqIKBECFbUytbMNdnfKgX2BJisIvYsz9Qackupmo2Ea3V5R1ZIh8W1-yNvA4XWtz4kigVGQNWeE8lkHIeLmp_cWF9_vA728MC9BuG2TMiBs6ctQyzqjH"/>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-7xl mx-auto relative lg:pl-80">
+<!-- Decorative Stickers - hidden on mobile to avoid overlap, visible on larger screens -->
+<div class="hidden sm:block absolute top-20 right-10 w-16 h-16 opacity-40 pointer-events-none sticker-rotate-right z-0">
+<span class="material-symbols-outlined text-primary text-6xl" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div class="hidden sm:block absolute top-40 left-4 lg:left-80 w-12 h-12 opacity-30 pointer-events-none sticker-rotate-left z-0">
+<span class="material-symbols-outlined text-secondary text-5xl" data-icon="favorite">favorite</span>
+</div>
+<!-- Hero Section -->
+<section class="mb-12 text-center relative z-10">
+<h2 class="font-headline text-4xl md:text-6xl lg:text-7xl font-bold text-on-surface mb-2 tracking-tight">우리 팀의 빛나는 생각들</h2>
+<p class="text-secondary font-medium text-lg md:text-xl font-handwriting">새로운 영감을 공유하고 함께 키워나가는 공간</p>
+<div class="mt-6 flex justify-center gap-2">
+<span class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-sm text-xs md:text-sm font-bold sticker-rotate-left shadow-sm font-label">#Y2K_Vibes</span>
+<span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-sm text-xs md:text-sm font-bold sticker-rotate-right shadow-sm font-label">#Idea_Sharing</span>
+</div>
+</section>
+<!-- Idea Grid: Fully Responsive -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+<!-- Card 1 -->
+<div class="surface-container-lowest rounded-xl shadow-[0_32px_48px_rgba(47,46,53,0.06)] p-6 relative sticker-rotate-left hover:rotate-0 transition-all duration-500 flex flex-col group border-2 border-[#d5cbff]/10">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 w-20 h-6 bg-primary-container/40 backdrop-blur-sm rounded-sm"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-tertiary bg-tertiary-container/30 px-2 py-1 rounded font-label">기획</span>
+<span class="material-symbols-outlined text-primary-container" data-icon="push_pin" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+</div>
+<h3 class="font-headline text-3xl font-bold text-on-surface mb-3 group-hover:text-primary transition-colors">여름 축제 기획</h3>
+<p class="text-on-surface-variant text-base mb-6 leading-relaxed font-body">우리 팀만의 감성을 담은 한여름 밤의 메타버스 페스티벌! holographic 무대와 디지털 굿즈를 기획해봐요.</p>
+<div class="mt-auto flex items-center justify-between border-t border-outline-variant/20 pt-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-[10px] font-bold text-secondary font-label">민지</div>
+<span class="text-sm font-semibold text-on-surface-variant font-label">김민지</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-primary font-bold text-base font-headline">24</span>
+<button class="flex items-center gap-1 bg-surface-container-low text-primary px-3 py-1.5 rounded-full text-xs font-bold hover:bg-primary-container hover:text-white transition-all active:scale-90 shadow-sm border border-primary/10 font-label">
+<span class="material-symbols-outlined text-sm" data-icon="favorite" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                        공감해요
+                    </button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="surface-container-lowest rounded-xl shadow-[0_32px_48px_rgba(47,46,53,0.06)] p-6 relative sticker-rotate-right hover:rotate-0 transition-all duration-500 flex flex-col group border-2 border-[#d5cbff]/10">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 w-20 h-6 bg-secondary-container/40 backdrop-blur-sm rounded-sm"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-secondary bg-secondary-container/30 px-2 py-1 rounded font-label">디자인</span>
+<span class="material-symbols-outlined text-secondary-container" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<h3 class="font-headline text-3xl font-bold text-on-surface mb-3 group-hover:text-secondary transition-colors">Y2K 브랜드 리뉴얼</h3>
+<p class="text-on-surface-variant text-base mb-6 leading-relaxed font-body">복고풍 폰트와 네온 컬러를 활용한 감각적인 브랜드 리뉴얼 제안서입니다. 90년대 감성을 현대적으로 재해석!</p>
+<div class="mt-auto flex items-center justify-between border-t border-outline-variant/20 pt-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-[10px] font-bold text-primary font-label">하니</div>
+<span class="text-sm font-semibold text-on-surface-variant font-label">이하니</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-primary font-bold text-base font-headline">42</span>
+<button class="flex items-center gap-1 bg-surface-container-low text-primary px-3 py-1.5 rounded-full text-xs font-bold hover:bg-primary-container hover:text-white transition-all active:scale-90 shadow-sm border border-primary/10 font-label">
+<span class="material-symbols-outlined text-sm" data-icon="favorite" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                        공감해요
+                    </button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="surface-container-lowest rounded-xl shadow-[0_32px_48px_rgba(47,46,53,0.06)] p-6 relative hover:rotate-1 transition-all duration-500 flex flex-col group border-2 border-[#d5cbff]/10">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 w-20 h-6 bg-tertiary-container/40 backdrop-blur-sm rounded-sm"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-on-tertiary-container bg-tertiary-container/30 px-2 py-1 rounded font-label">개발</span>
+<span class="material-symbols-outlined text-tertiary-container" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<h3 class="font-headline text-3xl font-bold text-on-surface mb-3 group-hover:text-tertiary transition-colors">AI 감정 분석 봇</h3>
+<p class="text-on-surface-variant text-base mb-6 leading-relaxed font-body">우리 팀 메신저에 적용할 AI 봇! 대화 내용을 분석해서 오늘 팀원들의 기분을 예쁜 이모지로 요약해줘요.</p>
+<div class="mt-auto flex items-center justify-between border-t border-outline-variant/20 pt-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-on-tertiary-container flex items-center justify-center text-[10px] font-bold text-white font-label">해린</div>
+<span class="text-sm font-semibold text-on-surface-variant font-label">강해린</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-primary font-bold text-base font-headline">18</span>
+<button class="flex items-center gap-1 bg-surface-container-low text-primary px-3 py-1.5 rounded-full text-xs font-bold hover:bg-primary-container hover:text-white transition-all active:scale-90 shadow-sm border border-primary/10 font-label">
+<span class="material-symbols-outlined text-sm" data-icon="favorite" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                        공감해요
+                    </button>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="surface-container-lowest rounded-xl shadow-[0_32px_48px_rgba(47,46,53,0.06)] p-6 relative sticker-rotate-left hover:rotate-0 transition-all duration-500 flex flex-col group border-2 border-[#d5cbff]/10">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 w-20 h-6 bg-primary-container/40 backdrop-blur-sm rounded-sm"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-primary bg-primary-container/20 px-2 py-1 rounded font-label">마케팅</span>
+<span class="material-symbols-outlined text-primary-container" data-icon="campaign" style="font-variation-settings: 'FILL' 1;">campaign</span>
+</div>
+<h3 class="font-headline text-3xl font-bold text-on-surface mb-3 group-hover:text-primary transition-colors">숏폼 챌린지 런칭</h3>
+<p class="text-on-surface-variant text-base mb-6 leading-relaxed font-body">Z세대를 겨냥한 틱톡/릴스 챌린지! 중독성 있는 멜로디와 누구나 따라 하기 쉬운 포인트 안무가 핵심입니다.</p>
+<div class="mt-auto flex items-center justify-between border-t border-outline-variant/20 pt-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-[10px] font-bold text-secondary font-label">다니</div>
+<span class="text-sm font-semibold text-on-surface-variant font-label">모다니</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-primary font-bold text-base font-headline">56</span>
+<button class="flex items-center gap-1 bg-surface-container-low text-primary px-3 py-1.5 rounded-full text-xs font-bold hover:bg-primary-container hover:text-white transition-all active:scale-90 shadow-sm border border-primary/10 font-label">
+<span class="material-symbols-outlined text-sm" data-icon="favorite" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                        공감해요
+                    </button>
+</div>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="surface-container-lowest rounded-xl shadow-[0_32px_48px_rgba(47,46,53,0.06)] p-6 relative sticker-rotate-right hover:rotate-0 transition-all duration-500 flex flex-col group border-2 border-[#d5cbff]/10">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 w-20 h-6 bg-secondary-container/40 backdrop-blur-sm rounded-sm"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-secondary bg-secondary-container/30 px-2 py-1 rounded font-label">공간</span>
+<span class="material-symbols-outlined text-secondary-container" data-icon="storefront" style="font-variation-settings: 'FILL' 1;">storefront</span>
+</div>
+<h3 class="font-headline text-3xl font-bold text-on-surface mb-3 group-hover:text-secondary transition-colors">팝업 스토어 로드맵</h3>
+<p class="text-on-surface-variant text-base mb-6 leading-relaxed font-body">성수동에 열리는 미니 팝업 스토어 기획안. 다이어리 꾸미기 체험존과 한정판 굿즈 자판기를 설치해봐요.</p>
+<div class="mt-auto flex items-center justify-between border-t border-outline-variant/20 pt-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-[10px] font-bold text-primary font-label">혜인</div>
+<span class="text-sm font-semibold text-on-surface-variant font-label">이혜인</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-primary font-bold text-base font-headline">31</span>
+<button class="flex items-center gap-1 bg-surface-container-low text-primary px-3 py-1.5 rounded-full text-xs font-bold hover:bg-primary-container hover:text-white transition-all active:scale-90 shadow-sm border border-primary/10 font-label">
+<span class="material-symbols-outlined text-sm" data-icon="favorite" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                        공감해요
+                    </button>
+</div>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="surface-container-lowest rounded-xl shadow-[0_32px_48px_rgba(47,46,53,0.06)] p-6 relative hover:-rotate-1 transition-all duration-500 flex flex-col group border-2 border-[#d5cbff]/10">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 w-20 h-6 bg-tertiary-container/40 backdrop-blur-sm rounded-sm"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-on-tertiary-container bg-tertiary-container/30 px-2 py-1 rounded font-label">기획</span>
+<span class="material-symbols-outlined text-tertiary-container" data-icon="history_edu" style="font-variation-settings: 'FILL' 1;">history_edu</span>
+</div>
+<h3 class="font-headline text-3xl font-bold text-on-surface mb-3 group-hover:text-tertiary transition-colors">팀 아카이빙 웹진</h3>
+<p class="text-on-surface-variant text-base mb-6 leading-relaxed font-body">우리의 프로젝트 기록을 한 눈에! 월간 웹진 형태로 발행하는 팀 아카이빙 플랫폼 구축 아이디어입니다.</p>
+<div class="mt-auto flex items-center justify-between border-t border-outline-variant/20 pt-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-on-tertiary-container flex items-center justify-center text-[10px] font-bold text-white font-label">빛나</div>
+<span class="text-sm font-semibold text-on-surface-variant font-label">빛나는 크리에이터</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-primary font-bold text-base font-headline">12</span>
+<button class="flex items-center gap-1 bg-surface-container-low text-primary px-3 py-1.5 rounded-full text-xs font-bold hover:bg-primary-container hover:text-white transition-all active:scale-90 shadow-sm border border-primary/10 font-label">
+<span class="material-symbols-outlined text-sm" data-icon="favorite" style="font-variation-settings: 'FILL' 1;">favorite</span>
+                        공감해요
+                    </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Action Button -->
+<div class="mt-16 flex justify-center pb-8">
+<button class="holographic-button flex items-center gap-4 px-10 md:px-12 py-4 md:py-5 rounded-full text-white font-headline text-2xl md:text-3xl font-bold shadow-[0_20px_40px_rgba(94,71,189,0.3)] hover:scale-105 active:scale-95 transition-all duration-300">
+<span class="material-symbols-outlined text-2xl md:text-3xl" data-icon="thumb_up" style="font-variation-settings: 'FILL' 1;">thumb_up</span>
+            내가 해볼게!
+        </button>
+</div>
+</main>
+<!-- Navigation Drawer (Desktop) -->
+<aside class="hidden lg:flex fixed left-0 top-16 h-[calc(100vh-4rem)] flex-col gap-2 p-4 w-72 bg-[#f3effa]/60 backdrop-blur-md dark:bg-[#12101a]/60 rounded-r-[3rem] shadow-2xl z-40 border-r border-white/20">
+<div class="flex items-center gap-3 p-4 mb-4">
+<div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white shadow-lg overflow-hidden border-2 border-white/50">
+<img alt="프로필 이미지" data-alt="vibrant pixel art icon representing a shining star or lightbulb for a creative profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGx3DEPVHvrhIOCIdHZ1UxtXkAoHToZh7f9tnH1PmA3TEe5it3wKj3__qntXMMzJMRzM9ZVZLzrqdNEzNC8m12PwnWxnqdiRKyxhh5lbNULw-kJCUAhyOma96VnP4eUG99GK_4_g6xioeuRW2z5WioNmVtAeHKVXWUj0Irf1L5RtoaX5M1bwt_7sm97kcpWMvCKolCFja0dfYX65Vs4uDHzfrAt8882Vwb-5ICLNQ4--7qJoY3c56iccRsKgkGSGc8Kku1uwx-ybKa"/>
+</div>
+<div>
+<h4 class="font-headline font-bold text-xl text-[#a22e64]">빛나는 크리에이터</h4>
+<div class="flex items-center gap-2">
+<span class="text-[10px] font-bold bg-primary text-white px-2 rounded-full font-label">LV. 5</span>
+<span class="text-[10px] text-[#5e47bd]/80 font-handwriting">우리의 빛나는 생각들</span>
+</div>
+</div>
+</div>
+<nav class="flex flex-col gap-2 font-label">
+<a class="bg-white/60 dark:bg-white/10 text-[#a22e64] font-bold rounded-2xl mx-2 shadow-sm px-4 py-3 flex items-center gap-3 active:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+            인기 생각
+        </a>
+<a class="text-[#5e47bd]/80 px-4 py-3 mx-2 flex items-center gap-3 hover:bg-[#d5cbff]/30 rounded-2xl transition-all active:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="speed">speed</span>
+            최신 공유
+        </a>
+<a class="text-[#5e47bd]/80 px-4 py-3 mx-2 flex items-center gap-3 hover:bg-[#d5cbff]/30 rounded-2xl transition-all active:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="draw">draw</span>
+            팀 캔버스
+        </a>
+<a class="text-[#5e47bd]/80 px-4 py-3 mx-2 flex items-center gap-3 hover:bg-[#d5cbff]/30 rounded-2xl transition-all active:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+            아카이브
+        </a>
+<div class="mt-4 pt-4 border-t border-outline-variant/20">
+<a class="text-[#5e47bd]/80 px-4 py-3 mx-2 flex items-center gap-3 hover:bg-[#d5cbff]/30 rounded-2xl transition-all active:translate-x-1" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                설정
+            </a>
+</div>
+</nav>
+</aside>
+<!-- BottomNavBar (Mobile only) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full h-20 bg-white/70 dark:bg-black/70 backdrop-blur-2xl flex justify-around items-center px-4 pb-2 z-50 shadow-[0_-10px_40px_rgba(94,71,189,0.1)] rounded-t-[3rem] border-t border-white/20">
+<a class="flex flex-col items-center justify-center text-[#5e47bd]/50 p-2 hover:text-[#a22e64] transition-colors active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label text-[10px] font-semibold">홈</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#ff79b0] to-[#d5cbff] text-white rounded-full p-3 shadow-lg -translate-y-2 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="font-label text-[10px] font-semibold">둘러보기</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#5e47bd]/50 p-2 hover:text-[#a22e64] transition-colors active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="font-label text-[10px] font-semibold">알림</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#5e47bd]/50 p-2 hover:text-[#a22e64] transition-colors active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label text-[10px] font-semibold">마이페이지</span>
+</a>
+</nav>
+</body></html>
