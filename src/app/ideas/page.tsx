@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import IdeaCard, { Idea } from '@/components/IdeaCard';
 import NewIdeaModal from '@/components/NewIdeaModal';
@@ -37,21 +37,54 @@ export default function IdeasPage() {
     return () => unsubscribe();
   }, []);
 
-  const handleCreateWorkspace = async (ideaId: string) => {
+  const handleCreateWorkspace = async (idea: Idea) => {
     if (isCreating) return;
     setIsCreating(true);
 
     try {
+      // 1. 이미 아이디어에 workspaceId가 있다면 바로 이동
+      if (idea.workspaceId) {
+        router.push(`/workspace/${idea.workspaceId}`);
+        setIsCreating(false);
+        return;
+      }
+
+      // 2. 혹은 예전 데이터라서 workspaceId는 없지만 실제 방이 존재하는지 확인
+      const q = query(collection(db, 'workspaces'), where('originalIdeaId', '==', idea.id));
+      const snap = await getDocs(q);
+      
+      if (!snap.empty) {
+        // 이미 방이 존재하면 그 방으로 이동하고 ideas 문서 업데이트
+        const existingId = snap.docs[0].id;
+        try {
+          await updateDoc(doc(db, 'ideas', idea.id), { workspaceId: existingId });
+        } catch (e) {
+          console.error("idea 문서 업데이트 실패", e);
+        }
+        router.push(`/workspace/${existingId}`);
+        setIsCreating(false);
+        return;
+      }
+
+      // 3. 진짜 방이 없으면 새로 생성
       const docRef = await addDoc(collection(db, 'workspaces'), {
-        originalIdeaId: ideaId,
+        originalIdeaId: idea.id,
         createdAt: serverTimestamp(),
       });
+      
+      // 생성된 방 ID를 ideas 문서에 저장
+      try {
+        await updateDoc(doc(db, 'ideas', idea.id), { workspaceId: docRef.id });
+      } catch (e) {
+        console.error("idea 문서 업데이트 실패", e);
+      }
+
       addPoints(50); // 작업 방 생성 성공 시 50 획득
       router.push(`/workspace/${docRef.id}`);
     } catch (error: any) {
       console.error('작업 방 생성 에러:', error);
       if (error.code === 'permission-denied') {
-        alert("Firestore 쓰기 권한이 없습니다.");
+        alert("Firestore 쓰기/읽기 권한이 없습니다.");
       } else {
         alert("작업 방 생성 중 오류가 발생했습니다.");
       }
@@ -123,7 +156,7 @@ export default function IdeasPage() {
               <div key={idea.id} className="break-inside-avoid">
                 <IdeaCard 
                   idea={idea} 
-                  onDeploy={() => handleCreateWorkspace(idea.id)} 
+                  onDeploy={() => handleCreateWorkspace(idea)} 
                   isCreating={isCreating} 
                 />
               </div>

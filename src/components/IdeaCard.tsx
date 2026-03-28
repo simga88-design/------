@@ -22,6 +22,7 @@ export interface Idea {
   resultImageUrl?: string;
   imageUrl?: string;
   authorPhotoUrl?: string;
+  workspaceId?: string;
 }
 
 export default function IdeaCard({ idea, onDeploy, isCreating }: { idea: Idea, onDeploy: () => void, isCreating: boolean }) {
@@ -227,12 +228,16 @@ export default function IdeaCard({ idea, onDeploy, isCreating }: { idea: Idea, o
                 onDeploy(); 
               }}
               disabled={isCreating}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 hover:from-pink-400 to-indigo-500 hover:to-indigo-400 py-4 rounded-full text-white font-headline text-2xl md:text-3xl font-black shadow-[0_8px_20px_rgba(236,72,153,0.3)] hover:shadow-[0_12px_25px_rgba(236,72,153,0.4)] hover:scale-[1.03] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed group/deploy border border-white/20"
+              className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r py-4 rounded-full text-white font-headline text-2xl md:text-3xl font-black shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.2)] hover:scale-[1.03] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed group/deploy border border-white/20 ${
+                (idea.workspaceId || (idea.progress !== undefined && idea.progress >= 0)) 
+                  ? 'from-indigo-500 hover:from-indigo-400 to-purple-500 hover:to-purple-400 ring-2 ring-indigo-300 ring-offset-2' 
+                  : 'from-pink-500 hover:from-pink-400 to-indigo-500 hover:to-indigo-400'
+              }`}
             >
               <span className={`material-symbols-outlined text-3xl ${isCreating ? 'animate-spin' : 'group-hover/deploy:rotate-12 transition-transform'}`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                {isCreating ? 'autorenew' : 'local_fire_department'}
+                {isCreating ? 'autorenew' : (idea.workspaceId || (idea.progress !== undefined && idea.progress >= 0)) ? 'rocket_launch' : 'local_fire_department'}
               </span>
-              내가 해볼게!
+              {(idea.workspaceId || (idea.progress !== undefined && idea.progress >= 0)) ? '작업방 입장하기 🚀' : '내가 해볼게!'}
             </button>
           </div>
         )}
