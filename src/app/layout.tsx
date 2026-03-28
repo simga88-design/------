@@ -26,6 +26,20 @@ export default function RootLayout({
     <html lang="ko" className={`light ${plusJakarta.variable} ${beVietnam.variable}`}>
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              var userAgent = navigator.userAgent.toLowerCase();
+              if (userAgent.indexOf("kakaotalk") > -1) {
+                if (userAgent.indexOf("android") > -1) {
+                  location.href = 'intent://' + location.href.replace(/https?:\\/\\//i, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+                } else if (userAgent.indexOf("iphone") > -1 || userAgent.indexOf("ipad") > -1) {
+                  alert("안전한 로그인을 위해 오른쪽 아래의 나침반(또는 사파리) 아이콘을 눌러 'Safari로 열기'를 선택해 주세요.");
+                }
+              }
+            `,
+          }}
+        />
       </head>
       <body className="bg-background font-body text-on-surface min-h-screen holographic-bg flex flex-col">
         <UserProvider>
