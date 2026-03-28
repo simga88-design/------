@@ -19,7 +19,23 @@ interface Memo {
 
 interface Member {
   nickname: string;
+  role?: string;
   joinedAt: any;
+}
+
+interface Resource {
+  id: string;
+  title: string;
+  url: string;
+  addedBy: string;
+  createdAt: any;
+}
+
+interface TeamLog {
+  id: string;
+  text: string;
+  author: string;
+  createdAt: any;
 }
 
 interface WorkspaceComment {
@@ -38,6 +54,13 @@ export default function WorkspacePage() {
   const [memos, setMemos] = useState<Memo[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [comments, setComments] = useState<WorkspaceComment[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [teamLogs, setTeamLogs] = useState<TeamLog[]>([]);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("기획/PM");
+  const [newResourceTitle, setNewResourceTitle] = useState("");
+  const [newResourceUrl, setNewResourceUrl] = useState("");
+  const [newTeamLog, setNewTeamLog] = useState("");
   const [newMemo, setNewMemo] = useState("");
   const [newComment, setNewComment] = useState("");
   const [resultUrl, setResultUrl] = useState("");
@@ -117,16 +140,65 @@ export default function WorkspacePage() {
       setComments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WorkspaceComment)));
     });
 
-    return () => { unsubMemos(); unsubMembers(); unsubComments(); };
+    const qResources = query(collection(db, `workspaces/${workspaceId}/resources`), orderBy('createdAt', 'desc'));
+    const unsubResources = onSnapshot(qResources, (snapshot) => {
+      setResources(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Resource)));
+    });
+
+    const qTeamLogs = query(collection(db, `workspaces/${workspaceId}/teamLogs`), orderBy('createdAt', 'asc'));
+    const unsubTeamLogs = onSnapshot(qTeamLogs, (snapshot) => {
+      setTeamLogs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamLog)));
+    });
+
+    return () => { unsubMemos(); unsubMembers(); unsubComments(); unsubResources(); unsubTeamLogs(); };
   }, [workspaceId]);
 
-  const handleJoin = async () => {
+  const handleJoinClick = () => {
     if (!profile) return alert("앗! 로그인이 필요한 기능입니다. 프로필 탭에서 3초 만에 구글로 가입해주세요! 👋");
-    if (!workspaceId) return;
+    setShowRoleModal(true);
+  };
+
+  const confirmJoin = async () => {
+    if (!profile || !workspaceId) return;
     await setDoc(doc(db, `workspaces/${workspaceId}/members`, profile.nickname), {
       nickname: profile.nickname,
+      role: selectedRole,
       joinedAt: serverTimestamp()
     });
+    setShowRoleModal(false);
+  };
+
+  const handleAddResource = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canEdit) return alert("프로젝트 멤버만 등록할 수 있습니다.");
+    if (!newResourceTitle.trim() || !newResourceUrl.trim() || !workspaceId) return;
+    await addDoc(collection(db, `workspaces/${workspaceId}/resources`), {
+      title: newResourceTitle,
+      url: newResourceUrl,
+      addedBy: profile!.nickname,
+      createdAt: serverTimestamp()
+    });
+    setNewResourceTitle("");
+    setNewResourceUrl("");
+  };
+
+  const handleDeleteResource = async (resourceId: string) => {
+    if (!canEdit) return alert("멤버만 삭제할 수 있습니다.");
+    if (confirm("정규 리소스를 삭제할까요?")) {
+      await deleteDoc(doc(db, `workspaces/${workspaceId}/resources`, resourceId));
+    }
+  };
+
+  const handleAddTeamLog = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canEdit) return alert("프로젝트 멤버만 작성할 수 있습니다.");
+    if (!newTeamLog.trim() || !workspaceId) return;
+    await addDoc(collection(db, `workspaces/${workspaceId}/teamLogs`), {
+      text: newTeamLog,
+      author: profile!.nickname,
+      createdAt: serverTimestamp()
+    });
+    setNewTeamLog("");
   };
 
   const syncToIdea = async (updatedMemos: Memo[]) => {
@@ -286,6 +358,31 @@ export default function WorkspacePage() {
 
   return (
     <main className="pt-24 pb-32 px-4 sm:px-6 max-w-7xl mx-auto relative min-h-screen overflow-x-hidden">
+      {/* 역할 선택 모달 */}
+      {showRoleModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full shadow-2xl border-4 border-pink-400">
+            <h3 className="text-2xl font-black mb-2 text-center text-slate-900 dark:text-white">역할을 선택해 주세요!</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-6">프로젝트에서 기여할 직무를 골라주세요. 💖</p>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {['기획/PM', '디자인', '프론트엔드', '백엔드', '마케팅', '기타'].map(role => (
+                <button
+                  key={role}
+                  onClick={() => setSelectedRole(role)}
+                  className={`py-3 rounded-xl font-bold border-2 transition-all ${selectedRole === role ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/50 dark:text-pink-300 shadow-md' : 'border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowRoleModal(false)} className="flex-1 py-3 px-4 rounded-xl font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-200">취소</button>
+              <button onClick={confirmJoin} className="flex-1 py-3 px-4 rounded-xl font-black bg-pink-500 text-white hover:bg-pink-600 shadow-md">합류 완료 🚀</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 키치 데코레이션 */}
       <div className="absolute top-20 left-4 md:left-12 opacity-60 rotate-[-15deg] pointer-events-none z-0">
         <span className="material-symbols-outlined text-pink-400 text-6xl drop-shadow-md" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
@@ -332,7 +429,8 @@ export default function WorkspacePage() {
           <div className="flex flex-wrap gap-2">
             {members.length === 0 && <span className="text-xs text-slate-400 font-bold">아직 합류한 멤버가 없습니다. 첫 멤버가 되어보세요!</span>}
             {members.map(m => (
-              <span key={m.nickname} className="bg-gradient-to-r from-pink-500 to-indigo-500 text-white px-3 py-1 rounded-full text-[11px] font-black shadow-md">
+              <span key={m.nickname} className="flex items-center gap-1 bg-gradient-to-r from-pink-500 to-indigo-500 text-white px-3 py-1.5 rounded-full text-[12px] font-black shadow-md border border-white/20">
+                <span className="bg-white/20 px-1.5 py-0.5 rounded-sm text-[10px] uppercase tracking-wider">{m.role || '팀원'}</span>
                 {m.nickname}
               </span>
             ))}
@@ -340,11 +438,46 @@ export default function WorkspacePage() {
         </div>
         {!isMember && (
           <button 
-            onClick={handleJoin}
+            onClick={handleJoinClick}
             className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black px-6 py-3 rounded-full shadow-lg border-2 border-transparent hover:scale-105 hover:bg-gradient-to-r hover:from-pink-500 hover:to-indigo-500 hover:border-white transition-all whitespace-nowrap"
           >
             기획에 합류하기 💖
           </button>
+        )}
+      </div>
+
+      {/* 리소스 아카이브 보드 (Resource Links) */}
+      <div className="mb-10 bg-white/40 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl shadow-sm backdrop-blur-sm">
+        <h3 className="font-headline font-black text-xl mb-4 text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <span className="material-symbols-outlined text-pink-500">push_pin</span> 핵심 리소스 아카이브 🔗
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-5">
+          {resources.length === 0 && (
+             <div className="col-span-full py-4 text-sm text-slate-400 font-bold mb-2">등록된 리소스가 없습니다. Figma, Github, Notion 등의 링크를 핀해보세요!</div>
+          )}
+          {resources.map(res => (
+            <div key={res.id} className="group flex flex-col justify-between bg-white dark:bg-slate-800 p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-700 shadow-sm hover:border-indigo-300 transition-colors">
+              <div className="flex justify-between items-start mb-2">
+                <a href={res.url} target="_blank" rel="noopener noreferrer" className="font-bold text-slate-800 dark:text-white truncate pr-2 hover:text-indigo-500 hover:underline">{res.title}</a>
+                {canEdit && (
+                  <button onClick={() => handleDeleteResource(res.id)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                )}
+              </div>
+              <div className="flex justify-between items-center mt-auto">
+                <span className="text-[10px] text-slate-400 font-bold max-w-[150px] truncate">{res.url}</span>
+                <span className="text-[10px] bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full text-slate-500 font-bold">{res.addedBy}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        {canEdit && (
+          <form onSubmit={handleAddResource} className="flex flex-col xl:flex-row gap-2">
+            <input type="text" value={newResourceTitle} onChange={e=>setNewResourceTitle(e.target.value)} placeholder="링크 제목 (예: 기획 노션, 깃허브)" className="xl:w-1/3 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 font-bold text-sm focus:outline-none focus:border-indigo-400 transition-colors shadow-inner" />
+            <input type="url" value={newResourceUrl} onChange={e=>setNewResourceUrl(e.target.value)} placeholder="URL 주소 붙여넣기 (https://...)" className="flex-1 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 font-bold text-sm focus:outline-none focus:border-pink-400 transition-colors shadow-inner" />
+            <button type="submit" disabled={!newResourceTitle || !newResourceUrl} className="bg-indigo-500 text-white font-black px-6 py-2 rounded-xl disabled:opacity-50 hover:bg-indigo-600 transition-colors shadow-sm whitespace-nowrap flex items-center justify-center gap-1"><span className="material-symbols-outlined text-[16px]">add_link</span> 추가하기</button>
+          </form>
         )}
       </div>
 
@@ -428,6 +561,45 @@ export default function WorkspacePage() {
           </div>
         </div>
 
+      </div>
+
+      {/* 독립된 공간: 팀 전용 개발 로그 (회의록) */}
+      <div className="mb-14 border-[3px] border-indigo-100 dark:border-indigo-900/50 rounded-3xl overflow-hidden shadow-sm bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm">
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40 p-5 border-b border-indigo-100 dark:border-indigo-900/50 flex justify-between items-center">
+          <h3 className="font-headline font-black text-xl text-indigo-800 dark:text-indigo-300 flex items-center gap-2">
+            <span className="material-symbols-outlined">forum</span> 팀 활동 로그 / 회의록📝
+          </h3>
+          <span className="text-xs font-bold text-indigo-500 bg-white dark:bg-slate-900 px-3 py-1 rounded-full shadow-sm">멤버 전용 읽기/쓰기</span>
+        </div>
+        
+        <div className="p-6 flex flex-col gap-4 max-h-[350px] overflow-y-auto">
+          {teamLogs.length === 0 && <p className="text-center text-slate-400 font-bold py-8 text-sm">아직 활동 기록이 없습니다. 팀원들과 업무 진행 상황을 핑퐁하세요! 🏓</p>}
+          {teamLogs.map(log => (
+            <div key={log.id} className="flex gap-3">
+              <div className="w-9 h-9 flex-shrink-0 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center font-black text-indigo-600 dark:text-pink-300 text-sm">{log.author.slice(0,1)}</div>
+              <div className="flex flex-col flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-bold text-slate-700 dark:text-slate-300 text-[13px]">{log.author}</span>
+                  <span className="text-[10px] text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 rounded-sm">{log.createdAt?.toDate().toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3.5 rounded-2xl rounded-tl-sm text-[14px] font-bold text-slate-800 dark:text-slate-200 whitespace-pre-wrap shadow-sm leading-relaxed">{log.text}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {canEdit ? (
+          <div className="p-4 bg-white/80 dark:bg-slate-900/80 border-t border-indigo-100 dark:border-slate-800 backdrop-blur-md">
+             <form onSubmit={handleAddTeamLog} className="flex gap-2 relative">
+               <textarea value={newTeamLog} onChange={e=>setNewTeamLog(e.target.value)} rows={1} placeholder="오늘의 작업 내용이나 회의록을 간략히 남겨주세요." className="flex-1 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold text-sm focus:outline-none focus:border-indigo-400 resize-none shadow-inner" onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAddTeamLog(e as unknown as React.FormEvent); } }} />
+               <button type="submit" disabled={!newTeamLog.trim()} className="bg-indigo-500 text-white rounded-xl px-4 flex items-center justify-center disabled:opacity-50 hover:bg-indigo-600 transition-colors shadow-md w-14"><span className="material-symbols-outlined text-xl">send</span></button>
+             </form>
+          </div>
+        ) : (
+          <div className="p-5 bg-slate-50 dark:bg-slate-900 border-t border-indigo-100 dark:border-slate-800 text-center font-bold text-sm text-slate-400">
+            🔒 기획에 합류한 프로젝트 팀원만 새 로그를 작성할 수 있습니다.
+          </div>
+        )}
       </div>
 
       {/* 결과물 제출 (Submission) 축하 섹션 */}
