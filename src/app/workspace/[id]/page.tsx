@@ -31,6 +31,14 @@ interface Resource {
   createdAt: any;
 }
 
+interface Snippet {
+  id: string;
+  title: string;
+  content: string;
+  addedBy: string;
+  createdAt: any;
+}
+
 interface TeamLog {
   id: string;
   text: string;
@@ -55,11 +63,14 @@ export default function WorkspacePage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [comments, setComments] = useState<WorkspaceComment[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
+  const [snippets, setSnippets] = useState<Snippet[]>([]);
   const [teamLogs, setTeamLogs] = useState<TeamLog[]>([]);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState("기획/PM");
   const [newResourceTitle, setNewResourceTitle] = useState("");
   const [newResourceUrl, setNewResourceUrl] = useState("");
+  const [newSnippetTitle, setNewSnippetTitle] = useState("");
+  const [newSnippetContent, setNewSnippetContent] = useState("");
   const [newTeamLog, setNewTeamLog] = useState("");
   const [newMemo, setNewMemo] = useState("");
   const [newComment, setNewComment] = useState("");
@@ -145,12 +156,17 @@ export default function WorkspacePage() {
       setResources(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Resource)));
     });
 
+    const qSnippets = query(collection(db, `workspaces/${workspaceId}/snippets`), orderBy('createdAt', 'desc'));
+    const unsubSnippets = onSnapshot(qSnippets, (snapshot) => {
+      setSnippets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Snippet)));
+    });
+
     const qTeamLogs = query(collection(db, `workspaces/${workspaceId}/teamLogs`), orderBy('createdAt', 'asc'));
     const unsubTeamLogs = onSnapshot(qTeamLogs, (snapshot) => {
       setTeamLogs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TeamLog)));
     });
 
-    return () => { unsubMemos(); unsubMembers(); unsubComments(); unsubResources(); unsubTeamLogs(); };
+    return () => { unsubMemos(); unsubMembers(); unsubComments(); unsubResources(); unsubSnippets(); unsubTeamLogs(); };
   }, [workspaceId]);
 
   const handleJoinClick = () => {
@@ -187,6 +203,32 @@ export default function WorkspacePage() {
     if (confirm("정규 리소스를 삭제할까요?")) {
       await deleteDoc(doc(db, `workspaces/${workspaceId}/resources`, resourceId));
     }
+  };
+
+  const handleAddSnippet = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canEdit) return alert("프로젝트 멤버만 등록할 수 있습니다.");
+    if (!newSnippetTitle.trim() || !newSnippetContent.trim() || !workspaceId) return;
+    await addDoc(collection(db, `workspaces/${workspaceId}/snippets`), {
+      title: newSnippetTitle,
+      content: newSnippetContent,
+      addedBy: profile!.nickname,
+      createdAt: serverTimestamp()
+    });
+    setNewSnippetTitle("");
+    setNewSnippetContent("");
+  };
+
+  const handleDeleteSnippet = async (snippetId: string) => {
+    if (!canEdit) return alert("멤버만 삭제할 수 있습니다.");
+    if (confirm("이 스니펫/메모를 삭제할까요?")) {
+      await deleteDoc(doc(db, `workspaces/${workspaceId}/snippets`, snippetId));
+    }
+  };
+
+  const handleCopySnippet = (content: string) => {
+    navigator.clipboard.writeText(content);
+    alert("스니펫이 클립보드에 복사되었습니다! 🚀");
   };
 
   const handleAddTeamLog = async (e: React.FormEvent) => {
@@ -477,6 +519,56 @@ export default function WorkspacePage() {
             <input type="text" value={newResourceTitle} onChange={e=>setNewResourceTitle(e.target.value)} placeholder="링크 제목 (예: 기획 노션, 깃허브)" className="xl:w-1/3 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 font-bold text-sm focus:outline-none focus:border-indigo-400 transition-colors shadow-inner" />
             <input type="url" value={newResourceUrl} onChange={e=>setNewResourceUrl(e.target.value)} placeholder="URL 주소 붙여넣기 (https://...)" className="flex-1 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 font-bold text-sm focus:outline-none focus:border-pink-400 transition-colors shadow-inner" />
             <button type="submit" disabled={!newResourceTitle || !newResourceUrl} className="bg-indigo-500 text-white font-black px-6 py-2 rounded-xl disabled:opacity-50 hover:bg-indigo-600 transition-colors shadow-sm whitespace-nowrap flex items-center justify-center gap-1"><span className="material-symbols-outlined text-[16px]">add_link</span> 추가하기</button>
+          </form>
+        )}
+      </div>
+
+      {/* 자유 메모 & 스니펫 보드 */}
+      <div className="mb-10 bg-white/40 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl shadow-sm backdrop-blur-sm">
+        <h3 className="font-headline font-black text-xl mb-4 text-slate-800 dark:text-slate-200 flex items-center gap-2">
+          <span className="material-symbols-outlined text-indigo-500">code_blocks</span> 자유 메모 & 스니펫 저장소 📝
+        </h3>
+        
+        <div className="flex flex-col gap-4 mb-6">
+          {snippets.length === 0 && (
+             <div className="py-6 text-center text-sm text-slate-400 font-bold border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl">
+               아직 등록된 메모나 코드 스니펫이 없습니다. 빛나는 아이디어를 메모해보세요! ✨
+             </div>
+          )}
+          {snippets.map(snippet => (
+            <div key={snippet.id} className="group bg-white dark:bg-slate-800 rounded-2xl border-2 border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col">
+              <div className="px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                <div className="flex flex-col">
+                  <span className="font-bold text-slate-800 dark:text-white text-base">{snippet.title}</span>
+                  <span className="text-[10px] text-slate-400 font-bold">by {snippet.addedBy} • {snippet.createdAt?.toDate().toLocaleDateString()}</span>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleCopySnippet(snippet.content)} className="text-slate-400 hover:text-indigo-500 transition-colors bg-white dark:bg-slate-800 px-2 py-1 rounded-md shadow-sm border border-slate-200 dark:border-slate-600 text-xs font-bold flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">content_copy</span> 복사
+                  </button>
+                  {canEdit && (
+                    <button onClick={() => handleDeleteSnippet(snippet.id)} className="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                      <span className="material-symbols-outlined text-sm px-1">close</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="p-4 bg-slate-900 text-slate-300 font-mono text-[13px] overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                {snippet.content}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {canEdit && (
+          <form onSubmit={handleAddSnippet} className="flex flex-col gap-3 bg-white/60 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+             <input type="text" value={newSnippetTitle} onChange={e=>setNewSnippetTitle(e.target.value)} placeholder="메모 제목 (예: 로그인 컴포넌트 코드, 공통 함수 초안)" className="w-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 font-bold text-sm focus:outline-none focus:border-indigo-400 transition-colors shadow-inner" />
+             <textarea value={newSnippetContent} onChange={e=>setNewSnippetContent(e.target.value)} rows={5} placeholder="여기에 길게 쓰고 싶은 메모나 코드 스니펫을 자유롭게 남겨주세요." className="w-full bg-slate-900 border-2 border-slate-800 rounded-xl px-4 py-4 font-mono text-[13px] text-green-400 focus:outline-none focus:border-pink-500 transition-colors shadow-inner resize-y leading-relaxed" />
+             <div className="flex justify-end mt-1">
+               <button type="submit" disabled={!newSnippetTitle || !newSnippetContent} className="bg-indigo-500 text-white font-black px-6 py-2.5 rounded-xl disabled:opacity-50 hover:bg-indigo-600 transition-colors shadow-md whitespace-nowrap flex items-center justify-center gap-1 hover:scale-105 active:scale-95">
+                 <span className="material-symbols-outlined text-[18px]">add_box</span> 메모/코드 저장하기
+               </button>
+             </div>
           </form>
         )}
       </div>
