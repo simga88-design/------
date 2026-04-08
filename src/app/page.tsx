@@ -137,12 +137,12 @@ export default function Home() {
         <div className="mt-8 text-center relative z-10 bg-black/30 rounded-2xl p-5 border border-white/5 flex flex-col md:flex-row items-center justify-center gap-4">
           <p className="text-sm font-bold text-indigo-100 flex items-center justify-center gap-2">
             <span className="material-symbols-outlined text-pink-400 text-xl font-bold">edit_note</span>
-            아이디어 포스팅 시 <span className="text-pink-400 font-black text-base">+50P</span>
+            아이디어 포스팅 시 <span className="text-pink-400 font-black text-base">+500P</span>
           </p>
           <span className="hidden md:block text-slate-600">|</span>
           <p className="text-sm font-bold text-indigo-100 flex items-center justify-center gap-2">
             <span className="material-symbols-outlined text-indigo-400 text-xl font-bold">favorite</span>
-            하트 꾹 공감 시 <span className="text-indigo-400 font-black text-base">+10P</span>
+            하트 꾹 공감 시 <span className="text-indigo-400 font-black text-base">+100P</span>
           </p>
         </div>
       </section>

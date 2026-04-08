@@ -169,7 +169,7 @@ export default function NewIdeaModal({ isOpen, onClose }: { isOpen: boolean, onC
           <div className="flex gap-3 mt-1">
             <button type="button" onClick={onClose} className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-black py-3.5 rounded-xl transition-colors">취소</button>
             <button type="submit" disabled={isSubmitting} className="flex-[2] bg-slate-900 border border-transparent dark:bg-white text-white dark:text-slate-900 hover:bg-gradient-to-r hover:from-pink-500 hover:to-indigo-500 hover:text-white hover:border-white transition-all font-black py-3.5 rounded-xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-2">
-              {isSubmitting ? '올리는 중...' : '등록하고 +50P 받기 💎'}
+              {isSubmitting ? '올리는 중...' : '등록하고 +500P 받기 💎'}
             </button>
           </div>
         </form>

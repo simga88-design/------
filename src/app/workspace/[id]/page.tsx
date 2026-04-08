@@ -700,7 +700,7 @@ export default function WorkspacePage() {
           <div className="bg-white dark:bg-slate-900 rounded-[22px] p-8 text-center relative overflow-hidden">
              <div className="absolute inset-0 bg-white/20" style={{ backgroundImage: "radial-gradient(circle, rgba(236,72,153,0.1) 1px, transparent 1px)", backgroundSize: "10px 10px" }}></div>
              <h2 className="text-3xl font-black font-headline text-slate-900 dark:text-white mb-3 relative z-10">🎉 대망의 결과물을 자랑할 시간!</h2>
-             <p className="text-slate-600 dark:text-slate-300 font-bold mb-8 relative z-10">모든 태스크가 완료되었습니다! 결과물(서비스 배포된 URL, 레포지토리, 노션 등) 링크와 예쁜 스크린샷 1장을 남기고 즉시 <strong className="text-pink-500">+200P</strong>를 받으세요!</p>
+             <p className="text-slate-600 dark:text-slate-300 font-bold mb-8 relative z-10">모든 태스크가 완료되었습니다! 결과물(서비스 배포된 URL, 레포지토리, 노션 등) 링크와 예쁜 스크린샷 1장을 남기고 즉시 <strong className="text-pink-500">+2,000P</strong>를 받으세요!</p>
              <form onSubmit={handleSubmitResult} className="max-w-xl mx-auto flex flex-col gap-4 relative z-10">
                {/* 사진 썸네일 업로드 */}
                <label className={`w-full h-40 rounded-2xl border-[3px] border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors overflow-hidden relative ${resultImagePreview ? 'border-pink-400 bg-pink-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800'}`}>

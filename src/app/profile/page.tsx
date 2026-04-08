@@ -136,7 +136,7 @@ export default function ProfilePage() {
               className="flex items-center gap-2 group/edit cursor-pointer hover:bg-slate-100/50 dark:hover:bg-white/5 px-4 py-1.5 rounded-2xl transition-colors" 
               onClick={() => {
                 if ((profile.tickets || 0) > 0) setIsEditing(true);
-                else alert("보유한 닉네임 교환권이 없습니다!\n아이디어 게시(50P) 및 공감(10P)으로 레벨을 올려 10레벨 단위 보상을 얻어보세요!");
+                else alert("보유한 닉네임 교환권이 없습니다!\n아이디어 게시(500P) 및 공감(100P)으로 레벨을 올려 10레벨 단위 보상을 얻어보세요!");
               }}
             >
               <h2 className="font-headline text-3xl font-black text-slate-900 dark:text-white drop-shadow-sm">{profile.nickname}</h2>

@@ -91,10 +91,10 @@ export default function TopNav() {
             <h4 className="font-bold text-indigo-800 dark:text-indigo-300 text-xs mb-2 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">tips_and_updates</span> 랭커가 되는 꿀팁</h4>
             <ul className="text-[11px] text-indigo-600 dark:text-indigo-400 space-y-2 font-medium leading-relaxed bg-white/50 dark:bg-black/20 p-3 rounded-xl">
               <li className="flex justify-between border-b border-indigo-100/50 dark:border-indigo-800/30 pb-1">
-                <span>신규 아이디어 작성</span> <strong className="font-black text-pink-500">+50P</strong>
+                <span>신규 아이디어 작성</span> <strong className="font-black text-pink-500">+500P</strong>
               </li>
               <li className="flex justify-between border-b border-indigo-100/50 dark:border-indigo-800/30 pb-1">
-                <span>다른 사람 글에 공감</span> <strong className="font-black text-pink-500">+10P</strong>
+                <span>다른 사람 글에 공감</span> <strong className="font-black text-pink-500">+100P</strong>
               </li>
               <li className="flex justify-between">
                 <span>10레벨 달성 시 보상</span> <strong className="font-black text-indigo-500">교환권 +1</strong>
