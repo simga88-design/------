@@ -64,7 +64,7 @@ export default function NewIdeaModal({ isOpen, onClose }: { isOpen: boolean, onC
         upvotes: 0,
         createdAt: serverTimestamp()
       });
-      addPoints(50); // 글 작성 시 경험치 50P 즉시 부여
+      addPoints(500); // 글 작성 시 경험치 500P 즉시 부여 (인플레이션 적용)
       
       // 상태 초기화
       onClose();

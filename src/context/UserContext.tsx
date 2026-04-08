@@ -9,6 +9,8 @@ import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 export interface ExtendedUserProfile extends UserProfile {
   tickets?: number;
   lastTicketLevel?: number;
+  lastLoginDate?: string;
+  streak?: number;
 }
 
 interface UserContextType {
@@ -28,6 +30,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<ExtendedUserProfile | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [toastQueue, setToastQueue] = useState<{id: number, p: number}[]>([]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
@@ -35,19 +38,62 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       if (u) {
         const docRef = doc(db, 'users', u.uid);
         const docSnap = await getDoc(docRef);
+        const today = new Date().toLocaleDateString('ko-KR');
+
         if (docSnap.exists()) {
-          setProfile(docSnap.data() as ExtendedUserProfile);
+          const data = docSnap.data() as ExtendedUserProfile;
+          
+          let updatedData: Partial<ExtendedUserProfile> = {};
+          let shouldUpdate = false;
+          let bonusPoints = 0;
+          let newStreak = data.streak || 0;
+
+          if (data.lastLoginDate !== today) {
+            const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('ko-KR');
+            if (data.lastLoginDate === yesterday) {
+              newStreak += 1;
+            } else {
+              newStreak = 1;
+            }
+            
+            bonusPoints = 500;
+            if (newStreak % 7 === 0) bonusPoints += 3000;
+            else if (newStreak % 3 === 0) bonusPoints += 1500;
+            
+            updatedData = { 
+              lastLoginDate: today, 
+              streak: newStreak,
+              points: (data.points || 0) + bonusPoints
+            };
+            shouldUpdate = true;
+          }
+
+          if (shouldUpdate) {
+            const nextProfile = { ...data, ...updatedData };
+            setProfile(nextProfile);
+            await updateDoc(docRef, updatedData);
+            if (bonusPoints > 0) {
+              setTimeout(() => {
+                 alert(`🎉 출석 완료! 연속 ${newStreak}일 접속 보상으로 +${bonusPoints.toLocaleString()}P 획득!`);
+              }, 1500);
+            }
+          } else {
+            setProfile(data);
+          }
         } else {
           // 신규 가입자 초기 프로필 생성
           const newProfile: ExtendedUserProfile = {
             nickname: generateKitschNickname(),
-            points: 0,
+            points: 500, // 최초 보상
             profileImage: u.photoURL || undefined,
             tickets: 0,
-            lastTicketLevel: 1
+            lastTicketLevel: 1,
+            lastLoginDate: today,
+            streak: 1
           };
           await setDoc(docRef, newProfile);
           setProfile(newProfile);
+          setTimeout(() => { alert(`🎉 환영합니다! 최초 출석 보상으로 +500P 획득!`); }, 1500);
         }
       } else {
         setProfile(null);
@@ -58,6 +104,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const addPoints = async (p: number) => {
     if (!user || !profile) return;
+
+    // Toast UI 추가
+    const tid = Date.now() + Math.random();
+    setToastQueue(prev => [...prev, { id: tid, p }]);
+    setTimeout(() => {
+      setToastQueue(prev => prev.filter(t => t.id !== tid));
+    }, 2500);
+
     const nextPoints = profile.points + p;
     const oldLevel = calculateLevel(profile.points);
     const newLevel = calculateLevel(nextPoints);
@@ -75,16 +129,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
       import('canvas-confetti').then(confetti => {
         confetti.default({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 },
-          colors: ['#f472b6', '#818cf8', '#34d399', '#fbbf24']
+          particleCount: 200,
+          spread: 120,
+          origin: { y: 0.5 },
+          colors: ['#f472b6', '#818cf8', '#34d399', '#fbbf24'],
+          zIndex: 99999
         });
         setTimeout(() => {
           let msg = `🎉 축하합니다! 레벨업 하셨습니다!\n현재 레벨: Lv.${newLevel}\n새로운 칭호 획득: [${getTitleByLevel(newLevel)}]`;
           if (isTicketGained) msg += `\n\n🎁 10단위 레벨업 달성 보상: [닉네임 교환권 1장]을 획득하셨습니다!`;
           alert(msg);
-        }, 300);
+        }, 500);
       });
     }
 
@@ -136,6 +191,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   return (
     <UserContext.Provider value={{ profile, user, level, title, addPoints, updateNickname, updateProfileImage, login, logout }}>
       {children}
+      {/* 플로팅 XP 토스트 UI */}
+      <div className="fixed bottom-24 right-6 flex flex-col gap-3 z-[9999] pointer-events-none">
+        {toastQueue.map((toast) => (
+          <div key={toast.id} className="toast-animation bg-gradient-to-r from-pink-500 to-orange-400 text-white font-black px-6 py-4 rounded-full shadow-[0_10px_25px_-5px_rgba(236,72,153,0.6)] border-2 border-white/50 text-xl flex items-center justify-between min-w-[200px]">
+            <span className="drop-shadow-sm">✨ XP 획득!</span>
+            <span className="text-3xl ml-4 drop-shadow-md text-yellow-100">+{toast.p.toLocaleString()}</span>
+          </div>
+        ))}
+      </div>
     </UserContext.Provider>
   );
 }

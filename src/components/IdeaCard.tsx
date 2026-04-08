@@ -76,7 +76,7 @@ export default function IdeaCard({ idea, onDeploy, isCreating }: { idea: Idea, o
         upvotes: increment(1),
         upvotedBy: arrayUnion(user.uid)
       });
-      addPoints(10); // 공감하기 성공 시 포인트 10점 획득
+      addPoints(100); // 공감하기 성공 시 포인트 100점 획득 (인플레이션 적용)
     } catch (error: any) {
       if (error.code === 'permission-denied') alert('공감하기 권한이 없습니다.');
     } finally {

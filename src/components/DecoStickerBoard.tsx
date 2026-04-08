@@ -38,7 +38,7 @@ const STICKER_TYPES = [
 ];
 
 export default function DecoStickerBoard() {
-  const { user } = useUser();
+  const { user, addPoints } = useUser();
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -103,6 +103,7 @@ export default function DecoStickerBoard() {
     const updated = [...stickers, newSticker];
     setStickers(updated);
     saveStickers(updated);
+    addPoints(100); // 다꾸 스티커 부착 시 100P 획득 (무제한)
   };
 
   const removeSticker = (id: string) => {

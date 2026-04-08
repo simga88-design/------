@@ -330,8 +330,8 @@ export default function WorkspacePage() {
       });
       // 임시로 상태 업데이트 (화면 즉시 반영)
       setIdea({ ...idea, isCompleted: true, resultUrl: resultUrl.trim(), resultImageUrl: uploadedResultImageUrl || undefined });
-      addPoints(200);
-      alert("🎉 전설의 시작입니다! 결과물 등록이 완료되었고 +200P가 지급되었습니다!");
+      addPoints(2000);
+      alert("🎉 전설의 시작입니다! 결과물 등록이 완료되었고 +2000P가 지급되었습니다!");
     } catch(err) {
       alert("제출 중 오류가 발생했습니다.");
     } finally {

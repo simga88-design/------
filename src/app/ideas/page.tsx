@@ -79,7 +79,7 @@ export default function IdeasPage() {
         console.error("idea 문서 업데이트 실패", e);
       }
 
-      addPoints(50); // 작업 방 생성 성공 시 50 획득
+      addPoints(500); // 작업 방 생성 성공 시 500 획득
       router.push(`/workspace/${docRef.id}`);
     } catch (error: any) {
       console.error('작업 방 생성 에러:', error);
