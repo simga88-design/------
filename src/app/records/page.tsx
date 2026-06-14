@@ -1,33 +1,20 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, orderBy, limit, collectionGroup } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Idea } from '@/components/IdeaCard';
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation';
-import DecoStickerBoard from '@/components/DecoStickerBoard';
-import NewDiaryModal from '@/components/NewDiaryModal';
-
-export interface Diary {
-  id: string;
-  uid: string;
-  date: string;
-  mood: string;
-  content: string;
-  imageUrl?: string;
-  createdAt: any;
-}
 
 export default function RecordsPage() {
   const { user, profile } = useUser();
   const router = useRouter();
   
-  const [activeTab, setActiveTab] = useState<'myIdeas' | 'upvotedIdeas' | 'myDiary'>('myIdeas');
+  const [activeTab, setActiveTab] = useState<'myIdeas' | 'upvotedIdeas' | 'myWorkspaces'>('myIdeas');
   const [myIdeas, setMyIdeas] = useState<Idea[]>([]);
   const [upvotedIdeas, setUpvotedIdeas] = useState<Idea[]>([]);
-  const [myDiaries, setMyDiaries] = useState<Diary[]>([]);
+  const [joinedWorkspaces, setJoinedWorkspaces] = useState<Idea[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDiaryModalOpen, setIsDiaryModalOpen] = useState(false);
 
   useEffect(() => {
     if (!user || !profile) {
@@ -51,11 +38,10 @@ export default function RecordsPage() {
       limit(20)
     );
 
-    // 3. 나만의 다이어리 (uid 기반 클라이언트 정렬용)
-    const qDiaries = query(
-      collection(db, 'diaries'),
-      where('uid', '==', user.uid),
-      limit(50)
+    // 3. 내가 합류한 멤버로 속한 작업방 쿼리 (collectionGroup 사용)
+    const qMemberships = query(
+      collectionGroup(db, 'members'),
+      where('nickname', '==', profile.nickname)
     );
 
     const unsubMyIdeas = onSnapshot(qMyIdeas, (snapshot) => {
@@ -67,13 +53,36 @@ export default function RecordsPage() {
       setUpvotedIdeas(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Idea[]);
     });
 
-    const unsubDiaries = onSnapshot(qDiaries, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Diary[];
-      // 인덱스 오류 방지를 위해 클라이언트 단에서 날짜/최신순 직렬화
-      setMyDiaries(docs.sort((a,b) => b.date.localeCompare(a.date)));
+    let unsubJoinedIdeas: (() => void) | undefined;
+    const unsubMemberships = onSnapshot(qMemberships, (snapshot) => {
+      const wsIds = snapshot.docs
+        .map(doc => doc.ref.parent.parent?.id)
+        .filter(Boolean) as string[];
+
+      if (wsIds.length === 0) {
+        setJoinedWorkspaces([]);
+        return;
+      }
+
+      // 첫 30개만 선택하여 Firestore 'in' 쿼리 제약사항 준수
+      const targetIds = wsIds.slice(0, 30);
+      const qJoinedIdeas = query(
+        collection(db, 'ideas'),
+        where('workspaceId', 'in', targetIds)
+      );
+
+      if (unsubJoinedIdeas) unsubJoinedIdeas();
+      unsubJoinedIdeas = onSnapshot(qJoinedIdeas, (ideaSnap) => {
+        setJoinedWorkspaces(ideaSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Idea));
+      });
     });
 
-    return () => { unsubMyIdeas(); unsubUpvoted(); unsubDiaries(); };
+    return () => { 
+      unsubMyIdeas(); 
+      unsubUpvoted(); 
+      unsubMemberships(); 
+      if (unsubJoinedIdeas) unsubJoinedIdeas();
+    };
   }, [user, profile]);
 
   if (!user) {
@@ -88,7 +97,18 @@ export default function RecordsPage() {
     );
   }
 
-  const currentList = activeTab === 'myIdeas' ? myIdeas : upvotedIdeas;
+  // 내가 만든 작업방 + 합류한 작업방 모두 포함하여 통합 및 중복 제거
+  const myWorkspaces = [
+    ...myIdeas.filter(idea => idea.workspaceId),
+    ...joinedWorkspaces
+  ];
+  const uniqueWorkspaces = Array.from(new Map(myWorkspaces.map(item => [item.workspaceId, item])).values());
+
+  const currentList = activeTab === 'myIdeas' 
+    ? myIdeas 
+    : activeTab === 'upvotedIdeas' 
+      ? upvotedIdeas 
+      : uniqueWorkspaces;
 
   return (
     <main className="pt-24 pb-32 px-4 sm:px-8 lg:px-12 w-full mx-auto relative min-h-screen overflow-x-hidden">
@@ -99,9 +119,6 @@ export default function RecordsPage() {
       <div className="absolute top-48 right-4 opacity-40 rotate-[25deg] pointer-events-none">
         <span className="material-symbols-outlined text-indigo-400 text-7xl drop-shadow-lg" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
       </div>
-      
-      {/* === 다이어리 꾸미기 엔진 탑재 (투명 오버레이 레이어 및 팔레트) === */}
-      {activeTab === 'myDiary' && <DecoStickerBoard />}
 
       <div className="text-center mb-10 relative z-10 mt-6">
         <h1 className="font-headline text-5xl md:text-6xl font-black text-slate-800 dark:text-white mb-2 tracking-tighter drop-shadow-md">
@@ -133,19 +150,17 @@ export default function RecordsPage() {
           <span className="text-lg">💖</span> 하트 스크랩
         </button>
         <button 
-          onClick={() => setActiveTab('myDiary')}
-          className={`flex-1 h-14 rounded-t-3xl font-black transition-all text-[13px] md:text-[15px] border-2 border-b-0 flex items-center justify-center gap-2 tracking-wide px-2 ${activeTab === 'myDiary' ? 'bg-white dark:bg-slate-900 text-violet-500 border-violet-300 dark:border-violet-600 z-10 relative shadow-[0_-5px_15px_rgba(139,92,246,0.15)]' : 'bg-violet-50/50 dark:bg-slate-800/50 text-slate-400 border-violet-100 dark:border-slate-700 hover:bg-white'}`}
-          style={{ marginBottom: activeTab === 'myDiary' ? '-2px' : '0' }}
+          onClick={() => setActiveTab('myWorkspaces')}
+          className={`flex-1 h-14 rounded-t-3xl font-black transition-all text-[13px] md:text-[15px] border-2 border-b-0 flex items-center justify-center gap-2 tracking-wide px-2 ${activeTab === 'myWorkspaces' ? 'bg-white dark:bg-slate-900 text-violet-500 border-violet-300 dark:border-violet-600 z-10 relative shadow-[0_-5px_15px_rgba(139,92,246,0.15)]' : 'bg-violet-50/50 dark:bg-slate-800/50 text-slate-400 border-violet-100 dark:border-slate-700 hover:bg-white'}`}
+          style={{ marginBottom: activeTab === 'myWorkspaces' ? '-2px' : '0' }}
         >
-          <span className="text-lg">🎧</span> 나만의 다이어리
+          <span className="text-lg">🚀</span> 나의 활성 작업방
         </button>
       </div>
 
-      <NewDiaryModal isOpen={isDiaryModalOpen} onClose={() => setIsDiaryModalOpen(false)} />
-
       {/* 스크랩북 메인 글래스 컨테이너 (바인더 탈피) */}
       <div 
-        className={`relative w-full max-w-6xl mx-auto border-2 rounded-3xl rounded-tl-none p-6 md:p-12 min-h-[600px] transition-all duration-500 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl ${activeTab === 'myIdeas' ? 'border-pink-300 dark:border-pink-600 shadow-pink-200/50' : activeTab === 'myDiary' ? 'border-violet-300 dark:border-violet-600 shadow-violet-200/50' : 'border-indigo-300 dark:border-indigo-600 shadow-indigo-200/50'}`} 
+        className={`relative w-full max-w-6xl mx-auto border-2 rounded-3xl rounded-tl-none p-6 md:p-12 min-h-[600px] transition-all duration-500 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-2xl ${activeTab === 'myIdeas' ? 'border-pink-300 dark:border-pink-600 shadow-pink-200/50' : activeTab === 'myWorkspaces' ? 'border-violet-300 dark:border-violet-600 shadow-violet-200/50' : 'border-indigo-300 dark:border-indigo-600 shadow-indigo-200/50'}`} 
       >
         {/* 장식용 글래스 반사광 */}
         <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-white/40 via-transparent to-white/10 dark:from-white/5 pointer-events-none rounded-3xl"></div>
@@ -155,64 +170,23 @@ export default function RecordsPage() {
           <div className="text-center py-32 w-full text-slate-400 font-bold animate-pulse font-headline text-2xl relative z-10">
             데이터를 불러오는 중입니다... 💿
           </div>
-        ) : activeTab === 'myDiary' ? (
-          <div className="relative z-10 w-full max-w-5xl mx-auto">
-            <div className="flex justify-between items-center mb-10 border-b-[3px] border-dashed border-violet-200 dark:border-violet-800 pb-5">
-              <h2 className="text-2xl font-black font-headline text-violet-600 dark:text-violet-400 flex items-center gap-2 drop-shadow-sm">
-                🎧 나만의 다이어리
-              </h2>
-              <button 
-                onClick={() => setIsDiaryModalOpen(true)}
-                className="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-black px-6 py-3 rounded-full shadow-lg hover:scale-105 hover:shadow-violet-400/50 active:scale-95 transition-all flex items-center gap-2 text-sm"
-              >
-                <span className="material-symbols-outlined text-[18px]">edit</span> 오늘 일기 쓰기
-              </button>
-            </div>
-
-            {myDiaries.length === 0 ? (
-              <div className="text-center py-24 w-full text-slate-400 font-black flex flex-col items-center">
-                <span className="text-6xl mb-4 drop-shadow-sm">💭</span>
-                아직 작성하신 일기가 없네요! 오늘 있었던 일을 남겨보세요.
-              </div>
-            ) : (
-              <div className="space-y-12 pl-2 md:pl-6 w-full mx-auto font-body">
-                {myDiaries.map(diary => (
-                  <div key={diary.id} className="relative group">
-                    {/* Y2K 깔끔한 타임라인 포인트 */}
-                    <div className="absolute -left-5 md:-left-10 top-0 w-5 h-5 rounded-full bg-violet-400 shadow-[0_0_10px_rgba(139,92,246,0.5)] z-20 border-4 border-white dark:border-slate-900"></div>
-                    <div className="absolute -left-[12px] md:-left-[32px] top-5 bottom-[-48px] w-[3px] bg-violet-100 dark:bg-violet-900/50 z-10 group-last:hidden"></div>
-
-                    <div className="mb-3 pl-4 flex items-center gap-3">
-                      <p className="text-violet-600 dark:text-violet-400 font-black tracking-wider text-xl drop-shadow-sm">
-                        {diary.date}
-                      </p>
-                      <span className="text-2xl drop-shadow-md">{diary.mood}</span>
-                    </div>
-
-                    <div className={`bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-6 md:p-8 rounded-3xl shadow-xl border-2 border-white dark:border-slate-700 hover:shadow-2xl transition-all duration-300 relative ml-4`}>
-                      {diary.imageUrl && (
-                        <div className="w-full aspect-[4/3] md:aspect-video mb-6 bg-slate-100 relative overflow-hidden rounded-2xl border-4 border-white dark:border-slate-700 shadow-md">
-                          <img src={diary.imageUrl} alt="Diary Snapshot" className="w-full h-full object-cover hover:scale-105 transition-all duration-700" />
-                        </div>
-                      )}
-                      <p className="text-slate-700 dark:text-slate-300 text-[16px] leading-loose whitespace-pre-wrap font-medium tracking-wide">
-                        {diary.content}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         ) : currentList.length === 0 ? (
           <div className="text-center py-24 w-full text-slate-400 font-black flex flex-col items-center relative z-10">
             <span className="text-6xl mb-4 drop-shadow-sm">🗂️</span>
-            {activeTab === 'myIdeas' ? '아직 작성하신 아이디어가 없네요! 반짝이는 기록을 남겨보세요.' : '스크랩 해둔 글이 없습니다! 마음에 드는 글을 찾아보세요.'}
+            {activeTab === 'myIdeas' 
+              ? '아직 작성하신 아이디어가 없네요! 반짝이는 기록을 남겨보세요.' 
+              : activeTab === 'upvotedIdeas'
+                ? '스크랩 해둔 글이 없습니다! 마음에 드는 글을 찾아보세요.'
+                : '아직 개설했거나 참여 중인 활성 작업방이 없습니다! 🚀'}
           </div>
         ) : (
           <div className="w-full relative z-10 mb-10 columns-1 md:columns-2 lg:columns-3 gap-6 max-w-6xl mx-auto">
             {currentList.map((item, idx) => (
-              <div key={item.id} className="break-inside-avoid relative group cursor-pointer w-full mb-6" onClick={() => router.push('/ideas')}>
+              <div 
+                key={item.id} 
+                className="break-inside-avoid relative group cursor-pointer w-full mb-6" 
+                onClick={() => router.push(activeTab === 'myWorkspaces' ? `/workspace/${item.workspaceId}` : '/ideas')}
+              >
                 {/* 하이틴 Y2K 감성 카드 스타일 */}
                 <div className={`bg-white dark:bg-slate-800 p-5 md:p-6 rounded-3xl shadow-lg border-2 border-white dark:border-slate-700 hover:shadow-2xl transition-all duration-300 relative group-hover:-translate-y-2`}>
                   
@@ -237,12 +211,23 @@ export default function RecordsPage() {
                   <h3 className="font-headline text-2xl font-black text-slate-900 dark:text-white mb-2 leading-snug break-words">{item.title}</h3>
                   <p className="text-slate-600 dark:text-slate-400 text-sm line-clamp-3 leading-relaxed font-body">{item.description}</p>
                   
+                  {/* 작업방 진행률 바 (작업방 탭에서만 활성화) */}
+                  {activeTab === 'myWorkspaces' && item.progress !== undefined && (
+                    <div className="mt-4 w-full flex items-center gap-2 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                      <span className="text-[10px] font-black tracking-wide text-slate-500">진행률</span>
+                      <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden shadow-inner">
+                        <div className="bg-gradient-to-r from-pink-500 to-indigo-500 h-full transition-all duration-500" style={{ width: `${item.progress}%` }}></div>
+                      </div>
+                      <span className="text-[10px] font-black tracking-widest text-indigo-500">{item.progress}%</span>
+                    </div>
+                  )}
+
                   <div className="mt-5 flex justify-between items-center opacity-80 group-hover:opacity-100 transition-opacity">
                     <div className="text-[12px] font-bold text-slate-500 flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-[14px]">edit</span> {item.authorName}
                     </div>
                     <span className="text-[12px] font-black text-indigo-500 hover:text-indigo-400 flex items-center gap-0.5">
-                      상세보기 <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                      {activeTab === 'myWorkspaces' ? '작업방 입장' : '상세보기'} <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                     </span>
                   </div>
                 </div>
