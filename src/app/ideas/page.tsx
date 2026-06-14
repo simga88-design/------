@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, onSnapshot, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import IdeaCard, { Idea } from '@/components/IdeaCard';
 import NewIdeaModal from '@/components/NewIdeaModal';
@@ -18,7 +18,7 @@ export default function IdeasPage() {
   // Firestore 연결 및 실시간 데이터 조회
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      collection(db, 'ideas'), 
+      query(collection(db, 'ideas'), orderBy('createdAt', 'desc')), 
       (snapshot) => {
         const ideasData = snapshot.docs.map(doc => ({
           id: doc.id,
