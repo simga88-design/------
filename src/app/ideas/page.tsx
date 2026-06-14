@@ -94,17 +94,17 @@ export default function IdeasPage() {
 
   return (
     <main className="pt-24 pb-32 px-4 sm:px-6 max-w-7xl mx-auto relative min-h-screen overflow-x-hidden">
-      {/* 키치하고 정신없는 Y2K 스크랩북 스티커 데코레이션 */}
-      <div className="absolute top-10 left-2 md:left-12 opacity-80 rotate-[-15deg] pointer-events-none z-0">
+      {/* 키치하고 은은한 Y2K 스크랩북 스티커 데코레이션 */}
+      <div className="absolute top-10 left-2 md:left-12 opacity-30 rotate-[-15deg] pointer-events-none z-0">
         <span className="material-symbols-outlined text-pink-400 text-6xl drop-shadow-md" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
       </div>
-      <div className="absolute top-40 right-2 md:right-16 opacity-70 rotate-[20deg] pointer-events-none z-0">
+      <div className="absolute top-40 right-2 md:right-16 opacity-20 rotate-[20deg] pointer-events-none z-0">
         <span className="material-symbols-outlined text-indigo-400 text-7xl drop-shadow-lg" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
       </div>
-      <div className="absolute top-[500px] left-5 opacity-60 rotate-[-10deg] pointer-events-none z-0 hidden lg:block">
+      <div className="absolute top-[500px] left-5 opacity-20 rotate-[-10deg] pointer-events-none z-0 hidden lg:block">
         <span className="material-symbols-outlined text-rose-400 text-6xl drop-shadow-sm" style={{ fontVariationSettings: "'FILL' 1" }}>music_note</span>
       </div>
-      <div className="absolute top-[250px] right-10 opacity-50 rotate-[35deg] pointer-events-none z-0">
+      <div className="absolute top-[250px] right-10 opacity-20 rotate-[35deg] pointer-events-none z-0">
         <span className="material-symbols-outlined text-teal-400 text-6xl drop-shadow-md" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
       </div>
 
@@ -122,12 +122,6 @@ export default function IdeasPage() {
           우리 동아리의 빛나는 생각들
           <span className="absolute -right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-indigo-500 text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
         </p>
-        
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <span className="bg-[#ffedf5] text-pink-700 px-4 py-1.5 rounded-full text-sm font-extrabold rotate-[-3deg] shadow-sm font-body border border-pink-200">#AI_Magic ✨</span>
-          <span className="bg-[#e0e7ff] text-indigo-700 px-4 py-1.5 rounded-full text-sm font-extrabold rotate-[3deg] shadow-sm font-body border border-indigo-200">#Hackathon_Vibes 🔥</span>
-          <span className="bg-[#e1f6ff] text-teal-700 px-4 py-1.5 rounded-full text-sm font-extrabold -rotate-1 shadow-sm font-body border border-teal-200 hidden sm:inline-block">#DeepLearning_Kitsch 👾</span>
-        </div>
 
         {/* 글 작성 플로팅 팝업 버튼 */}
         <div className="mt-8 flex justify-center">
@@ -147,7 +141,7 @@ export default function IdeasPage() {
       <div className="relative z-10 w-full">
         {ideas.length === 0 ? (
           <div className="h-64 flex flex-col items-center justify-center text-slate-700 font-bold font-body bg-white/50 rounded-[2rem] border-4 border-dashed border-pink-300/50 backdrop-blur-md shadow-xl p-8 text-center max-w-2xl mx-auto">
-            <span className="material-symbols-outlined text-6xl text-pink-400 mb-4 animate-bounce" style={{ fontVariationSettings: "'FILL' 1" }}>cruelty_free</span>
+            <span className="material-symbols-outlined text-6xl text-pink-400 mb-4 animate-bounce" style={{ fontVariationSettings: "'FILL' 1" }}>lightbulb</span>
             <span className="text-xl md:text-2xl font-headline">아직 등록된 아이디어가 없어요!<br/>Firestore에 반짝이는 아이디어를 추가해주세요 ✨</span>
           </div>
         ) : (

@@ -34,7 +34,7 @@ export default function TopNav() {
       <header className="fixed top-0 w-full z-40 bg-white/70 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.05)] h-16 border-b border-pink-100 dark:border-pink-900/30">
         <div className="flex justify-between items-center px-6 h-full w-full max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
-            <button onClick={() => setIsSidebarOpen(true)} className="material-symbols-outlined text-pink-600 dark:text-pink-400 hover:scale-125 hover:rotate-6 transition-all cursor-pointer">menu</button>
+            <button onClick={() => setIsSidebarOpen(true)} className="material-symbols-outlined text-pink-600 dark:text-pink-400 hover:scale-125 hover:rotate-6 transition-all cursor-pointer">leaderboard</button>
             <h1 className="text-xl md:text-2xl font-black text-slate-800 dark:text-white font-headline tracking-tight whitespace-nowrap overflow-hidden text-ellipsis">아이디어 나눔터</h1>
           </div>
           <div className="flex items-center gap-4 shrink-0">

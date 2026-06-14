@@ -31,18 +31,6 @@ export default function NewIdeaModal({ isOpen, onClose }: { isOpen: boolean, onC
     if (!title.trim() || !description.trim()) return;
     if (isSubmitting) return;
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        if (file.size > 5 * 1024 * 1024) {
-          alert("앗! 다이어리 사진 용량은 최대 5MB까지만 붙일 수 있어요 📸");
-          return;
-        }
-        setImageFile(file);
-        setImagePreview(URL.createObjectURL(file));
-      }
-    };
-
     setIsSubmitting(true);
     try {
       let imageUrl = null;
@@ -118,7 +106,7 @@ export default function NewIdeaModal({ isOpen, onClose }: { isOpen: boolean, onC
                   type="button" 
                   key={emoji} 
                   onClick={() => appendEmoji(emoji)} 
-                  className="text-[16px] hover:scale-125 transition-transform active:scale-95 bg-slate-50 hover:bg-white dark:bg-slate-800 w-8 h-8 rounded-full flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-sm"
+                  className="text-[16px] hover:scale-125 transition-all active:scale-95 bg-slate-50 hover:bg-white hover:border-pink-300 dark:bg-slate-800 dark:hover:bg-slate-700 dark:hover:border-pink-500 w-8 h-8 rounded-full flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-sm focus:outline-none"
                 >
                   {emoji}
                 </button>

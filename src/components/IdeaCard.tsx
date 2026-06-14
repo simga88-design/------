@@ -39,25 +39,6 @@ export default function IdeaCard({ idea, onDeploy, isCreating }: { idea: Idea, o
   const [editTitle, setEditTitle] = useState(displayTitle);
   const [editDesc, setEditDesc] = useState(displayDesc);
   const isOwner = profile?.nickname === displayAuthor;
-  const [fetchedPhotoUrl, setFetchedPhotoUrl] = useState<string | null>(idea.authorPhotoUrl || null);
-
-  // 구버전 데이터 호환 (authorPhotoUrl이 없는 경우 users 컬렉션에서 닉네임으로 조회)
-  useEffect(() => {
-    if (idea.authorPhotoUrl || !displayAuthor || displayAuthor === '비밀친구') return;
-    
-    const fetchAuthorPhoto = async () => {
-      try {
-        const q = query(collection(db, 'users'), where('nickname', '==', displayAuthor));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          setFetchedPhotoUrl(snap.docs[0].data().profileImage || null);
-        }
-      } catch (e) {
-        console.error("작성자 프사 조회 실패:", e);
-      }
-    };
-    fetchAuthorPhoto();
-  }, [idea.authorPhotoUrl, displayAuthor]);
 
   const handleUpvote = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -124,8 +105,8 @@ export default function IdeaCard({ idea, onDeploy, isCreating }: { idea: Idea, o
   return (
     <div className={`transition-all duration-300 transform ${getRotationClass()} relative mb-8 font-body group hover:scale-[1.02] hover:z-20`}>
       
-      {/* 반투명 마스킹 테이프 장식 */}
-      <div className={`absolute -top-3 left-1/2 -translate-x-1/2 w-28 h-8 ${tapeColor} opacity-80 backdrop-blur-md rotate-[-2deg] z-20 shadow-sm border border-white/20`}
+      {/* 반투명 마스킹 테이프 장식 (양끝이 뜯겨나간 빈티지 스타일) */}
+      <div className={`absolute -top-3 left-1/2 -translate-x-1/2 w-28 h-7 ${tapeColor} opacity-80 backdrop-blur-sm -rotate-3 z-20 shadow-[0_2px_5px_rgba(0,0,0,0.08)] border-x-[6px] border-x-dashed border-x-white/40 border-y border-y-white/10`}
            style={{ maskImage: "linear-gradient(to right, rgba(0,0,0,0.8), black 5%, black 95%, rgba(0,0,0,0.8))", WebkitMaskImage: "linear-gradient(to right, rgba(0,0,0,0.8), black 5%, black 95%, rgba(0,0,0,0.8))" }}></div>
            
       {/* 폴라로이드 몸체 박스 */}
@@ -196,8 +177,8 @@ export default function IdeaCard({ idea, onDeploy, isCreating }: { idea: Idea, o
         <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-dashed border-slate-200 pb-5 mb-5 px-2">
           {/* 작성자 정보 */}
           <div className="flex items-center gap-2.5">
-            {fetchedPhotoUrl ? (
-              <img src={fetchedPhotoUrl} alt="Author Profilfe" className="w-9 h-9 rounded-full object-cover shadow-sm bg-white border border-slate-200" />
+            {idea.authorPhotoUrl ? (
+              <img src={idea.authorPhotoUrl} alt="Author Profilfe" className="w-9 h-9 rounded-full object-cover shadow-sm bg-white border border-slate-200" />
             ) : (
               <div className={`w-9 h-9 rounded-full ${tapeColor} flex items-center justify-center text-xs font-black text-white shadow-sm font-headline text-xl`}>
                 {displayAuthor.slice(0, 1)}
@@ -228,13 +209,13 @@ export default function IdeaCard({ idea, onDeploy, isCreating }: { idea: Idea, o
                 onDeploy(); 
               }}
               disabled={isCreating}
-              className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r py-4 rounded-full text-white font-headline text-2xl md:text-3xl font-black shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.2)] hover:scale-[1.03] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed group/deploy border border-white/20 ${
+              className={`w-full flex items-center justify-center gap-2 bg-gradient-to-r py-3 rounded-full text-white font-headline text-base md:text-lg font-black shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed group/deploy border border-white/20 ${
                 (idea.workspaceId || (idea.progress !== undefined && idea.progress >= 0)) 
                   ? 'from-indigo-500 hover:from-indigo-400 to-purple-500 hover:to-purple-400 ring-2 ring-indigo-300 ring-offset-2' 
                   : 'from-pink-500 hover:from-pink-400 to-indigo-500 hover:to-indigo-400'
               }`}
             >
-              <span className={`material-symbols-outlined text-3xl ${isCreating ? 'animate-spin' : 'group-hover/deploy:rotate-12 transition-transform'}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+              <span className={`material-symbols-outlined text-xl ${isCreating ? 'animate-spin' : 'group-hover/deploy:rotate-12 transition-transform'}`} style={{ fontVariationSettings: "'FILL' 1" }}>
                 {isCreating ? 'autorenew' : (idea.workspaceId || (idea.progress !== undefined && idea.progress >= 0)) ? 'rocket_launch' : 'local_fire_department'}
               </span>
               {(idea.workspaceId || (idea.progress !== undefined && idea.progress >= 0)) ? '작업방 입장하기 🚀' : '내가 해볼게!'}
