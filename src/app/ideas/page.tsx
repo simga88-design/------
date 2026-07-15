@@ -8,6 +8,10 @@ import IdeaCard, { Idea } from '@/components/IdeaCard';
 import NewIdeaModal from '@/components/NewIdeaModal';
 import { useUser } from '@/context/UserContext';
 
+const hasCode = (error: unknown): error is { code: string } => {
+  return typeof error === 'object' && error !== null && 'code' in error;
+};
+
 export default function IdeasPage() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -79,11 +83,11 @@ export default function IdeasPage() {
         console.error("idea 문서 업데이트 실패", e);
       }
 
-      addPoints(500); // 작업 방 생성 성공 시 500 획득
+      await addPoints(500);
       router.push(`/workspace/${docRef.id}`);
-    } catch (error: any) {
+    } catch (error) {
       console.error('작업 방 생성 에러:', error);
-      if (error.code === 'permission-denied') {
+      if (hasCode(error) && error.code === 'permission-denied') {
         alert("Firestore 쓰기/읽기 권한이 없습니다.");
       } else {
         alert("작업 방 생성 중 오류가 발생했습니다.");

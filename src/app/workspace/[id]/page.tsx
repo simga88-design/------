@@ -1,4 +1,7 @@
 'use client';
+
+/* eslint-disable @next/next/no-img-element -- Workspace result previews use local blob URLs before upload. */
+
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { doc, getDoc, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
@@ -14,13 +17,13 @@ interface Memo {
   author: string;
   assignee: string | null;
   status: 'todo' | 'in-progress' | 'done';
-  createdAt: any;
+  createdAt: unknown;
 }
 
 interface Member {
   nickname: string;
   role?: string;
-  joinedAt: any;
+  joinedAt: unknown;
 }
 
 interface Resource {
@@ -28,7 +31,7 @@ interface Resource {
   title: string;
   url: string;
   addedBy: string;
-  createdAt: any;
+  createdAt: unknown;
 }
 
 interface Snippet {
@@ -36,22 +39,54 @@ interface Snippet {
   title: string;
   content: string;
   addedBy: string;
-  createdAt: any;
+  createdAt: unknown;
 }
 
 interface TeamLog {
   id: string;
   text: string;
   author: string;
-  createdAt: any;
+  createdAt: unknown;
 }
 
 interface WorkspaceComment {
   id: string;
   text: string;
   author: string;
-  createdAt: any;
+  createdAt: unknown;
 }
+
+const formatFirestoreDate = (
+  value: unknown,
+  options?: Intl.DateTimeFormatOptions,
+) => {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'toDate' in value &&
+    typeof value.toDate === 'function'
+  ) {
+    return value.toDate().toLocaleDateString(undefined, options);
+  }
+
+  return '';
+};
+
+const formatFirestoreTime = (
+  value: unknown,
+  options?: Intl.DateTimeFormatOptions,
+) => {
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'toDate' in value &&
+    typeof value.toDate === 'function'
+  ) {
+    return value.toDate().toLocaleTimeString(undefined, options);
+  }
+
+  return '';
+};
 
 export default function WorkspacePage() {
   const params = useParams();
@@ -269,10 +304,10 @@ export default function WorkspacePage() {
     syncToIdea([...memos, { ...newMemoObj, id: 'temp' }]);
   };
 
-  const updateMemoStatus = async (id: string, newStatus: string) => {
+  const updateMemoStatus = async (id: string, newStatus: Memo['status']) => {
     if (!canEdit) return alert("프로젝트 멤버만 상태를 변경할 수 있습니다.");
     await updateDoc(doc(db, `workspaces/${workspaceId}/memos`, id), { status: newStatus });
-    syncToIdea(memos.map(m => m.id === id ? { ...m, status: newStatus as any } : m));
+    syncToIdea(memos.map(m => m.id === id ? { ...m, status: newStatus } : m));
   };
 
   const updateMemoAssignee = async (id: string, assignee: string | null) => {
@@ -332,7 +367,8 @@ export default function WorkspacePage() {
       setIdea({ ...idea, isCompleted: true, resultUrl: resultUrl.trim(), resultImageUrl: uploadedResultImageUrl || undefined });
       addPoints(2000);
       alert("🎉 전설의 시작입니다! 결과물 등록이 완료되었고 +2000P가 지급되었습니다!");
-    } catch(err) {
+    } catch(error) {
+      console.error(error);
       alert("제출 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
@@ -540,7 +576,7 @@ export default function WorkspacePage() {
               <div className="px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
                 <div className="flex flex-col">
                   <span className="font-bold text-slate-800 dark:text-white text-base">{snippet.title}</span>
-                  <span className="text-[10px] text-slate-400 font-bold">by {snippet.addedBy} • {snippet.createdAt?.toDate().toLocaleDateString()}</span>
+                  <span className="text-[10px] text-slate-400 font-bold">by {snippet.addedBy} • {formatFirestoreDate(snippet.createdAt)}</span>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => handleCopySnippet(snippet.content)} className="text-slate-400 hover:text-indigo-500 transition-colors bg-white dark:bg-slate-800 px-2 py-1 rounded-md shadow-sm border border-slate-200 dark:border-slate-600 text-xs font-bold flex items-center gap-1">
@@ -672,7 +708,7 @@ export default function WorkspacePage() {
               <div className="flex flex-col flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-bold text-slate-700 dark:text-slate-300 text-[13px]">{log.author}</span>
-                  <span className="text-[10px] text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 rounded-sm">{log.createdAt?.toDate().toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'})}</span>
+                  <span className="text-[10px] text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 rounded-sm">{formatFirestoreTime(log.createdAt, { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3.5 rounded-2xl rounded-tl-sm text-[14px] font-bold text-slate-800 dark:text-slate-200 whitespace-pre-wrap shadow-sm leading-relaxed">{log.text}</div>
               </div>
@@ -778,7 +814,7 @@ export default function WorkspacePage() {
               </div>
               <p className="text-slate-800 dark:text-slate-200 font-bold flex-1 break-words px-2">{comment.text}</p>
               <div className="text-xs font-bold text-slate-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block pl-4 border-l border-slate-200 dark:border-slate-700">
-                {comment.createdAt?.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                {formatFirestoreDate(comment.createdAt, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           ))}
