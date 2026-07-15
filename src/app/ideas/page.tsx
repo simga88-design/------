@@ -1,167 +1,256 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, onSnapshot, addDoc, serverTimestamp, query, where, getDocs, updateDoc, doc, orderBy } from 'firebase/firestore';
+import { addDoc, collection, doc, getDocs, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import IdeaCard, { Idea } from '@/components/IdeaCard';
 import NewIdeaModal from '@/components/NewIdeaModal';
 import { useUser } from '@/context/UserContext';
 
+type IdeaFilter = 'all' | 'latest' | 'popular' | 'workspace' | 'completed';
+
+const filters: { id: IdeaFilter; label: string; icon: string }[] = [
+  { id: 'all', label: '전체', icon: 'dashboard' },
+  { id: 'latest', label: '최신', icon: 'schedule' },
+  { id: 'popular', label: '인기', icon: 'favorite' },
+  { id: 'workspace', label: '작업방 있음', icon: 'rocket_launch' },
+  { id: 'completed', label: '완성됨', icon: 'task_alt' },
+];
+
 const hasCode = (error: unknown): error is { code: string } => {
   return typeof error === 'object' && error !== null && 'code' in error;
 };
 
+const getIdeaText = (idea: Idea) => {
+  return `${idea.title || ''} ${idea.description || ''} ${idea.category || ''} ${idea.authorName || idea.author || ''}`.toLowerCase();
+};
+
 export default function IdeasPage() {
   const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [activeFilter, setActiveFilter] = useState<IdeaFilter>('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
   const { addPoints } = useUser();
 
-  // Firestore 연결 및 실시간 데이터 조회
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      query(collection(db, 'ideas'), orderBy('createdAt', 'desc')), 
+      query(collection(db, 'ideas'), orderBy('createdAt', 'desc')),
       (snapshot) => {
-        const ideasData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Idea[];
-        setIdeas(ideasData);
+        setIdeas(snapshot.docs.map((ideaDoc) => ({ id: ideaDoc.id, ...ideaDoc.data() }) as Idea));
       },
       (error) => {
-        console.error("Firestore 구독 에러:", error);
+        console.error('Firestore ideas subscription failed:', error);
         if (error.code === 'permission-denied') {
-          alert("Firestore 읽기 권한이 없습니다. Firebase Console에서 규칙(Rules)을 확인해주세요.");
+          alert('Firestore 읽기 권한이 없습니다. Firebase Console에서 규칙을 확인해주세요.');
         }
-      }
+      },
     );
-    
+
     return () => unsubscribe();
   }, []);
+
+  const filteredIdeas = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    let nextIdeas = ideas.filter((idea) => {
+      if (!normalizedSearch) return true;
+      return getIdeaText(idea).includes(normalizedSearch);
+    });
+
+    if (activeFilter === 'popular') {
+      nextIdeas = [...nextIdeas].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
+    }
+
+    if (activeFilter === 'workspace') {
+      nextIdeas = nextIdeas.filter((idea) => Boolean(idea.workspaceId || idea.progress !== undefined));
+    }
+
+    if (activeFilter === 'completed') {
+      nextIdeas = nextIdeas.filter((idea) => Boolean(idea.isCompleted));
+    }
+
+    return nextIdeas;
+  }, [activeFilter, ideas, searchTerm]);
+
+  const stats = useMemo(() => {
+    return {
+      total: ideas.length,
+      workspaces: ideas.filter((idea) => Boolean(idea.workspaceId || idea.progress !== undefined)).length,
+      completed: ideas.filter((idea) => idea.isCompleted).length,
+      upvotes: ideas.reduce((sum, idea) => sum + (idea.upvotes || 0), 0),
+    };
+  }, [ideas]);
 
   const handleCreateWorkspace = async (idea: Idea) => {
     if (isCreating) return;
     setIsCreating(true);
 
     try {
-      // 1. 이미 아이디어에 workspaceId가 있다면 바로 이동
       if (idea.workspaceId) {
         router.push(`/workspace/${idea.workspaceId}`);
         setIsCreating(false);
         return;
       }
 
-      // 2. 혹은 예전 데이터라서 workspaceId는 없지만 실제 방이 존재하는지 확인
-      const q = query(collection(db, 'workspaces'), where('originalIdeaId', '==', idea.id));
-      const snap = await getDocs(q);
-      
-      if (!snap.empty) {
-        // 이미 방이 존재하면 그 방으로 이동하고 ideas 문서 업데이트
-        const existingId = snap.docs[0].id;
+      const existingWorkspaceQuery = query(collection(db, 'workspaces'), where('originalIdeaId', '==', idea.id));
+      const existingWorkspaceSnap = await getDocs(existingWorkspaceQuery);
+
+      if (!existingWorkspaceSnap.empty) {
+        const existingId = existingWorkspaceSnap.docs[0].id;
         try {
           await updateDoc(doc(db, 'ideas', idea.id), { workspaceId: existingId });
-        } catch (e) {
-          console.error("idea 문서 업데이트 실패", e);
+        } catch (error) {
+          console.error('Failed to backfill idea workspaceId:', error);
         }
         router.push(`/workspace/${existingId}`);
         setIsCreating(false);
         return;
       }
 
-      // 3. 진짜 방이 없으면 새로 생성
       const docRef = await addDoc(collection(db, 'workspaces'), {
         originalIdeaId: idea.id,
         createdAt: serverTimestamp(),
       });
-      
-      // 생성된 방 ID를 ideas 문서에 저장
+
       try {
         await updateDoc(doc(db, 'ideas', idea.id), { workspaceId: docRef.id });
-      } catch (e) {
-        console.error("idea 문서 업데이트 실패", e);
+      } catch (error) {
+        console.error('Failed to update idea workspaceId:', error);
       }
 
       await addPoints(500);
       router.push(`/workspace/${docRef.id}`);
     } catch (error) {
-      console.error('작업 방 생성 에러:', error);
+      console.error('Failed to create workspace:', error);
       if (hasCode(error) && error.code === 'permission-denied') {
-        alert("Firestore 쓰기/읽기 권한이 없습니다.");
+        alert('Firestore 쓰기/읽기 권한이 없습니다.');
       } else {
-        alert("작업 방 생성 중 오류가 발생했습니다.");
+        alert('작업방 생성 중 오류가 발생했습니다.');
       }
       setIsCreating(false);
     }
   };
 
   return (
-    <main className="pt-24 pb-32 px-4 sm:px-6 max-w-7xl mx-auto relative min-h-screen overflow-x-hidden">
-      {/* 키치하고 은은한 Y2K 스크랩북 스티커 데코레이션 */}
-      <div className="absolute top-10 left-2 md:left-12 opacity-30 rotate-[-15deg] pointer-events-none z-0">
-        <span className="material-symbols-outlined text-pink-400 text-6xl drop-shadow-md" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
-      </div>
-      <div className="absolute top-40 right-2 md:right-16 opacity-20 rotate-[20deg] pointer-events-none z-0">
-        <span className="material-symbols-outlined text-indigo-400 text-7xl drop-shadow-lg" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-      </div>
-      <div className="absolute top-[500px] left-5 opacity-20 rotate-[-10deg] pointer-events-none z-0 hidden lg:block">
-        <span className="material-symbols-outlined text-rose-400 text-6xl drop-shadow-sm" style={{ fontVariationSettings: "'FILL' 1" }}>music_note</span>
-      </div>
-      <div className="absolute top-[250px] right-10 opacity-20 rotate-[35deg] pointer-events-none z-0">
-        <span className="material-symbols-outlined text-teal-400 text-6xl drop-shadow-md" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-      </div>
+    <main className="w-full pt-24 pb-32 px-4 sm:px-6 max-w-7xl mx-auto relative min-h-screen overflow-x-hidden">
+      <section className="relative z-10 mb-8 min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-5 items-stretch min-w-0">
+          <div className="min-w-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/70 dark:border-slate-800 rounded-lg p-6 md:p-8 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 min-w-0">
+              <div className="min-w-0">
+                <div className="inline-flex items-center gap-2 text-sm font-black text-pink-600 dark:text-pink-300 bg-pink-50 dark:bg-pink-900/20 px-3 py-1.5 rounded-full mb-4">
+                  <span className="material-symbols-outlined text-[18px]">lightbulb</span>
+                  아이디어 탐색
+                </div>
+                <h1 className="font-headline text-4xl md:text-5xl font-black text-slate-950 dark:text-white tracking-tight mb-3">
+                  함께 키울 생각을 찾아보세요
+                </h1>
+                <p className="text-slate-600 dark:text-slate-300 font-bold leading-relaxed max-w-2xl">
+                  떠오른 제안을 모으고, 공감으로 가능성을 확인한 뒤, 작업방에서 실제 프로젝트로 발전시킵니다.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                aria-label="새 아이디어 작성"
+                className="inline-flex items-center justify-center gap-2 bg-slate-950 dark:bg-white text-white dark:text-slate-950 px-5 py-3 rounded-lg font-black shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all shrink-0"
+              >
+                <span className="material-symbols-outlined" aria-hidden="true" style={{ fontVariationSettings: "'FILL' 1" }}>edit_square</span>
+                새 아이디어
+              </button>
+            </div>
+          </div>
 
-      {/* 헤더 타이틀 섹션 */}
-      <section className="mb-14 text-center relative z-10 px-2 mt-4 flex flex-col items-center">
-        <div className="inline-block relative">
-          <h1 className="font-headline text-6xl md:text-8xl font-black text-slate-900 dark:text-white mb-4 tracking-tighter drop-shadow-sm">
-            아이디어 나눔터
-          </h1>
-          <span className="absolute -top-6 -right-8 material-symbols-outlined text-yellow-400 text-4xl animate-bounce" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
+          <div className="grid grid-cols-2 gap-3 bg-slate-950 text-white rounded-lg p-5 shadow-md min-w-0">
+            <div>
+              <p className="text-xs font-black text-slate-400 mb-1">전체 아이디어</p>
+              <p className="text-3xl font-black font-headline">{stats.total}</p>
+            </div>
+            <div>
+              <p className="text-xs font-black text-slate-400 mb-1">공감</p>
+              <p className="text-3xl font-black font-headline">{stats.upvotes}</p>
+            </div>
+            <div className="border-t border-white/10 pt-3">
+              <p className="text-xs font-black text-slate-400 mb-1">작업방</p>
+              <p className="text-2xl font-black font-headline text-indigo-200">{stats.workspaces}</p>
+            </div>
+            <div className="border-t border-white/10 pt-3">
+              <p className="text-xs font-black text-slate-400 mb-1">완성</p>
+              <p className="text-2xl font-black font-headline text-emerald-200">{stats.completed}</p>
+            </div>
+          </div>
         </div>
-        
-        <p className="text-slate-800 font-bold text-xl md:text-2xl font-body bg-white/60 px-6 py-2 rounded-full backdrop-blur-md border border-pink-200/50 shadow-sm relative sticker-rotate-left">
-          <span className="absolute -left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-pink-500 text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>favorite</span>
-          우리 동아리의 빛나는 생각들
-          <span className="absolute -right-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-indigo-500 text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-        </p>
+      </section>
 
-        {/* 글 작성 플로팅 팝업 버튼 */}
-        <div className="mt-8 flex justify-center">
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3.5 rounded-full font-black text-lg shadow-xl hover:scale-105 active:scale-95 transition-all border-2 border-transparent hover:bg-gradient-to-r hover:from-pink-500 hover:to-indigo-500 hover:text-white"
-          >
-            <span className="material-symbols-outlined pb-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>edit_square</span> 
-            새 아이디어 반짝! ✨
-          </button>
+      <section className="sticky top-20 z-30 mb-8 bg-white/85 dark:bg-slate-950/85 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-lg p-3 shadow-sm min-w-0">
+        <div className="flex flex-col lg:flex-row gap-3 min-w-0">
+          <label className="w-full lg:flex-1 min-w-0 flex items-center gap-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-4 h-12">
+            <span className="material-symbols-outlined text-slate-400">search</span>
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="제목, 내용, 작성자, 카테고리 검색"
+              className="w-full min-w-0 bg-transparent outline-none text-sm font-bold text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+            />
+          </label>
+          <div className="w-full lg:w-auto min-w-0 flex gap-2 overflow-x-auto pb-1 lg:pb-0">
+            {filters.map((filter) => {
+              const isActive = activeFilter === filter.id;
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  onClick={() => setActiveFilter(filter.id)}
+                  aria-label={`${filter.label} 필터`}
+                  className={`h-12 px-4 rounded-lg border text-sm font-black whitespace-nowrap inline-flex items-center gap-2 transition-colors ${
+                    isActive
+                      ? 'bg-slate-950 dark:bg-white text-white dark:text-slate-950 border-slate-950 dark:border-white'
+                      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-pink-300'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]" aria-hidden="true">{filter.icon}</span>
+                  {filter.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
 
       <NewIdeaModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
-      {/* 반응형 핀터레스트(Masonry) 스타일 리스트 */}
-      <div className="relative z-10 w-full">
-        {ideas.length === 0 ? (
-          <div className="h-64 flex flex-col items-center justify-center text-slate-700 font-bold font-body bg-white/50 rounded-[2rem] border-4 border-dashed border-pink-300/50 backdrop-blur-md shadow-xl p-8 text-center max-w-2xl mx-auto">
-            <span className="material-symbols-outlined text-6xl text-pink-400 mb-4 animate-bounce" style={{ fontVariationSettings: "'FILL' 1" }}>lightbulb</span>
-            <span className="text-xl md:text-2xl font-headline">아직 등록된 아이디어가 없어요!<br/>Firestore에 반짝이는 아이디어를 추가해주세요 ✨</span>
+      <section className="relative z-10 w-full">
+        {filteredIdeas.length === 0 ? (
+          <div className="min-h-80 flex flex-col items-center justify-center text-slate-700 dark:text-slate-300 font-bold bg-white/70 dark:bg-slate-900/70 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 backdrop-blur-md shadow-sm p-8 text-center">
+            <span className="material-symbols-outlined text-6xl text-pink-400 mb-4" style={{ fontVariationSettings: "'FILL' 1" }}>lightbulb</span>
+            <h2 className="text-2xl font-headline font-black mb-2">조건에 맞는 아이디어가 없어요</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">검색어를 줄이거나 새 아이디어를 남겨보세요.</p>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              aria-label="아이디어 작성"
+              className="inline-flex items-center gap-2 bg-slate-950 dark:bg-white text-white dark:text-slate-950 px-5 py-3 rounded-lg font-black"
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">add</span>
+              아이디어 작성
+            </button>
           </div>
         ) : (
-          <div className="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8 w-full max-w-7xl mx-auto">
-            {ideas.map(idea => (
-              <div key={idea.id} className="break-inside-avoid">
-                <IdeaCard 
-                  idea={idea} 
-                  onDeploy={() => handleCreateWorkspace(idea)} 
-                  isCreating={isCreating} 
-                />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {filteredIdeas.map((idea) => (
+              <IdeaCard
+                key={idea.id}
+                idea={idea}
+                onDeploy={() => handleCreateWorkspace(idea)}
+                isCreating={isCreating}
+              />
             ))}
           </div>
         )}
-      </div>
+      </section>
     </main>
   );
 }

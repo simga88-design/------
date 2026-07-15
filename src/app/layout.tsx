@@ -31,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`light ${plusJakarta.variable} ${beVietnam.variable}`}>
       <head>
-        {/* eslint-disable-next-line @next/next/no-page-custom-font -- Material Symbols is an icon font, not body typography. */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font -- Material Symbols is used as the app icon font. */}
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
@@ -54,11 +54,6 @@ export default function RootLayout({
           <TopNav />
           {children}
           <BottomNav />
-          <div
-            className="hidden md:block fixed top-20 right-4 w-32 h-8 bg-primary-container/40 opacity-50 sticker-rotate-neg -z-10 pointer-events-none"
-            style={{ maskImage: "linear-gradient(to right, black, transparent)", WebkitMaskImage: "linear-gradient(to right, black, transparent)" }}
-          />
-          <div className="hidden md:block fixed bottom-24 left-4 w-24 h-6 bg-secondary-container/40 opacity-50 sticker-rotate-pos -z-10 pointer-events-none" />
         </UserProvider>
       </body>
     </html>

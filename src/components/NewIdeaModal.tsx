@@ -17,7 +17,7 @@ export default function NewIdeaModal({ isOpen, onClose }: { isOpen: boolean; onC
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { profile, user, addPoints } = useUser();
 
-  const emojis = ['✨', '💡', '🚀', '🎨', '📌', '🧩', '🌱', '🤝', '🔥', '📚', '🎯', '🛠️'];
+  const quickMarks = ['AI', '공간', '행사', '기록', '돌봄', '앱', '캠페인', '도구'];
 
   if (!isOpen) return null;
 
@@ -86,85 +86,100 @@ export default function NewIdeaModal({ isOpen, onClose }: { isOpen: boolean; onC
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden border-2 border-pink-300 dark:border-pink-800 scale-in-center">
-        <div className="bg-gradient-to-r from-pink-400 to-indigo-500 p-6 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-white/20" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px)', backgroundSize: '10px 10px' }} />
-          <h2 className="text-white font-headline font-black text-2xl relative z-10 drop-shadow-sm">새 아이디어 작성</h2>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/45 backdrop-blur-sm">
+      <div className="bg-[#fffdf8] dark:bg-slate-950 rounded-lg w-full max-w-lg shadow-2xl overflow-hidden border border-[#e6dfd3] dark:border-slate-800">
+        <div className="p-6 border-b border-[#e6dfd3] dark:border-slate-800">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-black text-[#e85d55] mb-2">New Idea</p>
+              <h2 className="text-[#172033] dark:text-white font-headline font-black text-2xl">새 아이디어 작성</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mt-2">작게 떠오른 생각도 괜찮아요. 먼저 남겨두면 함께 키울 수 있습니다.</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-9 h-9 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-900 text-slate-500 flex items-center justify-center"
+              aria-label="닫기"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
         </div>
+
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5">
           <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">카테고리 태그</label>
+            <label className="block text-sm font-black text-[#172033] dark:text-slate-100 mb-2">카테고리</label>
             <input
               type="text"
               value={category}
               onChange={(event) => setCategory(event.target.value)}
               placeholder="예: 행사, 공간, 앱, 캠페인"
-              className="w-full border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl px-4 py-2.5 font-bold focus:border-pink-400 dark:focus:border-pink-500 outline-none transition-colors shadow-sm"
+              className="w-full border border-[#e6dfd3] dark:border-slate-800 bg-white dark:bg-slate-900 dark:text-white rounded-lg px-4 py-3 font-bold focus:border-[#139c8f] outline-none transition-colors"
               maxLength={10}
             />
+            <div className="flex flex-wrap gap-1.5 mt-2.5">
+              {quickMarks.map((mark) => (
+                <button
+                  type="button"
+                  key={mark}
+                  onClick={() => setCategory(mark)}
+                  className="text-xs font-black px-2.5 py-1.5 rounded-md border border-[#e6dfd3] dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:border-[#139c8f]/60"
+                >
+                  {mark}
+                </button>
+              ))}
+            </div>
           </div>
+
           <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">아이디어 제목</label>
+            <label className="block text-sm font-black text-[#172033] dark:text-slate-100 mb-2">제목</label>
             <input
               type="text"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="예: 동아리 활동 기록을 자동으로 정리하는 도구"
-              className="w-full border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl px-4 py-3 font-bold focus:border-pink-400 dark:focus:border-pink-500 outline-none transition-colors shadow-sm"
+              className="w-full border border-[#e6dfd3] dark:border-slate-800 bg-white dark:bg-slate-900 dark:text-white rounded-lg px-4 py-3 font-bold focus:border-[#e85d55] outline-none transition-colors"
               maxLength={40}
               required
             />
-            <div className="flex flex-wrap gap-1.5 mt-2.5">
-              {emojis.map((emoji) => (
-                <button
-                  type="button"
-                  key={emoji}
-                  onClick={() => setTitle((prev) => prev + emoji)}
-                  className="text-[16px] hover:scale-125 transition-all active:scale-95 bg-slate-50 hover:bg-white hover:border-pink-300 dark:bg-slate-800 dark:hover:bg-slate-700 dark:hover:border-pink-500 w-8 h-8 rounded-full flex items-center justify-center border border-slate-200 dark:border-slate-700 shadow-sm focus:outline-none"
-                  aria-label={`${emoji} 추가`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
           </div>
+
           <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">내용</label>
+            <label className="block text-sm font-black text-[#172033] dark:text-slate-100 mb-2">내용</label>
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               placeholder="무엇을 해결하고 싶은지, 누가 쓰면 좋은지, 어떻게 시작하면 좋을지 적어주세요."
-              className="w-full border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl px-4 py-3 font-medium min-h-[120px] focus:border-indigo-400 dark:focus:border-indigo-500 outline-none transition-colors shadow-sm resize-none"
+              className="w-full border border-[#e6dfd3] dark:border-slate-800 bg-white dark:bg-slate-900 dark:text-white rounded-lg px-4 py-3 font-medium min-h-[130px] focus:border-[#139c8f] outline-none transition-colors resize-none"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">대표 사진 선택</label>
+            <label className="block text-sm font-black text-[#172033] dark:text-slate-100 mb-2">대표 이미지</label>
             <div className="flex items-center gap-4">
-              <label className={`w-24 h-24 shrink-0 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${imagePreview ? 'border-pink-400 bg-pink-50' : 'border-slate-300 bg-slate-50 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800'}`}>
+              <label className={`w-24 h-24 shrink-0 rounded-lg border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors ${imagePreview ? 'border-[#139c8f] bg-[#edf8f6]' : 'border-[#e6dfd3] bg-white hover:bg-[#f7f4ee] dark:border-slate-800 dark:bg-slate-900'}`}>
                 <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                 {imagePreview ? (
-                  <img src={imagePreview} alt="미리보기" className="w-full h-full object-cover rounded-xl" />
+                  <img src={imagePreview} alt="미리보기" className="w-full h-full object-cover rounded-md" />
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-slate-400">add_a_photo</span>
-                    <span className="text-[10px] font-bold text-slate-400 mt-1">사진 추가</span>
+                    <span className="text-[10px] font-bold text-slate-400 mt-1">선택</span>
                   </>
                 )}
               </label>
-              <div className="flex-1 text-[13px] font-bold text-slate-500 leading-relaxed bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                이미지는 선택 사항입니다. 아이디어를 빠르게 이해할 수 있는 사진이나 스케치를 올리면 카드가 더 잘 읽힙니다.
-              </div>
+              <p className="flex-1 text-[13px] font-bold text-slate-500 leading-relaxed bg-white dark:bg-slate-900 p-3 rounded-lg border border-[#e6dfd3] dark:border-slate-800">
+                이미지는 선택 사항입니다. 스케치, 참고 사진, 활동 장면처럼 아이디어를 빠르게 이해할 수 있는 이미지를 올려보세요.
+              </p>
             </div>
           </div>
 
-          <div className="flex gap-3 mt-1">
-            <button type="button" onClick={onClose} className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-black py-3.5 rounded-xl transition-colors">
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={onClose} className="flex-1 bg-white hover:bg-[#f7f4ee] dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-[#e6dfd3] dark:border-slate-800 font-black py-3 rounded-lg transition-colors">
               취소
             </button>
-            <button type="submit" disabled={isSubmitting} className="flex-[2] bg-slate-900 border border-transparent dark:bg-white text-white dark:text-slate-900 hover:bg-gradient-to-r hover:from-pink-500 hover:to-indigo-500 hover:text-white hover:border-white transition-all font-black py-3.5 rounded-xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-2">
+            <button type="submit" disabled={isSubmitting} className="flex-[2] bg-[#172033] text-white hover:bg-slate-800 transition-colors font-black py-3 rounded-lg shadow-sm disabled:opacity-50 flex items-center justify-center gap-2">
               {isSubmitting ? '등록 중...' : '등록하고 +500P 받기'}
             </button>
           </div>

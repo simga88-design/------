@@ -1,30 +1,52 @@
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
 
+:root {
+  --studio-bg: #f7f4ee;
+  --studio-surface: #fffdf8;
+  --studio-ink: #172033;
+  --studio-muted: #697386;
+  --studio-line: #e6dfd3;
+  --studio-coral: #e85d55;
+  --studio-teal: #139c8f;
+  --studio-amber: #c98217;
+}
+
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
-.holographic-bg {
-  background: linear-gradient(135deg, #f9f5ff 0%, #ffeff2 25%, #d5cbff 50%, #e1f6ff 75%, #f9f5ff 100%);
-  background-size: 400% 400%;
-}
-.glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-.sticker-rotate-pos { transform: rotate(2deg); }
-.sticker-rotate-neg { transform: rotate(-2deg); }
 
-/* Dark Mode Extensions (Neon Kitsch) */
+.holographic-bg {
+  background:
+    linear-gradient(rgba(23, 32, 51, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 32, 51, 0.02) 1px, transparent 1px),
+    var(--studio-bg);
+  background-size: 32px 32px, 32px 32px, auto;
+}
+
+.glass-panel {
+  background: rgba(255, 253, 248, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(230, 223, 211, 0.9);
+}
+
+.sticker-rotate-pos,
+.sticker-rotate-neg {
+  transform: none;
+}
+
 .dark .holographic-bg {
-  background: linear-gradient(135deg, #180924 0%, #2b1130 25%, #182236 50%, #15202b 75%, #180924 100%);
-  background-size: 400% 400%;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    #111827;
+  background-size: 32px 32px, 32px 32px, auto;
 }
 
 .dark .glass-panel {
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(17, 24, 39, 0.78);
+  border: 1px solid rgba(71, 85, 105, 0.55);
 }
 
 @keyframes fadeInUp {
